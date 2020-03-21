@@ -1,0 +1,2 @@
+# timelog
+log my activities
