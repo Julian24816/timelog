@@ -2,8 +2,8 @@ package timelog;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
-import timelog.model.Factory;
-import timelog.model.Preferences;
+import timelog.model.db.Factory;
+import timelog.preferences.Preferences;
 import timelog.view.LoginScene;
 import timelog.view.MainScene;
 import timelog.view.customFX.ErrorAlert;

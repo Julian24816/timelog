@@ -1,4 +1,4 @@
-package timelog.model;
+package timelog.model.db;
 
 import org.apache.commons.dbcp2.BasicDataSource;
 

@@ -8,8 +8,8 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import timelog.view.customFX.ErrorAlert;
 import timelog.view.customFX.GridPane2C;
-import timelog.model.Database;
-import timelog.model.PreferenceMap;
+import timelog.model.db.Database;
+import timelog.preferences.PreferenceMap;
 
 import java.io.IOException;
 import java.nio.file.Paths;

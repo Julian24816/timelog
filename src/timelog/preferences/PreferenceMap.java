@@ -1,4 +1,4 @@
-package timelog.model;
+package timelog.preferences;
 
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextInputControl;

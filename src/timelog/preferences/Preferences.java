@@ -1,4 +1,4 @@
-package timelog.model;
+package timelog.preferences;
 
 import java.io.IOException;
 import java.io.InputStream;

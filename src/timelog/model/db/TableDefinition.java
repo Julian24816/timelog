@@ -1,4 +1,4 @@
-package timelog.model;
+package timelog.model.db;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

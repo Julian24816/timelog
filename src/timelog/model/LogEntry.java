@@ -4,6 +4,9 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import timelog.model.db.DatabaseObject;
+import timelog.model.db.Factory;
+import timelog.model.db.TableDefinition;
 
 import java.time.Duration;
 import java.time.LocalDateTime;

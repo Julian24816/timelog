@@ -1,4 +1,4 @@
-package timelog.model;
+package timelog.model.db;
 
 import java.sql.*;
 import java.util.Collection;
