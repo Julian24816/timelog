@@ -1,5 +1,6 @@
 package timelog.preferences;
 
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextInputControl;
 
@@ -10,6 +11,12 @@ import java.util.function.Function;
 public final class PreferenceMap {
     private Map<TextInputControl, String> textInputControls = new HashMap<>();
     private Map<ChoiceBox<?>, String> choiceBoxes = new HashMap<>();
+    private Map<CheckBox, String> checkBoxes = new HashMap<>();
+
+    public void mapTo(CheckBox control, String key) {
+        checkBoxes.put(control, key);
+        control.setSelected(Preferences.get(key).equals("true"));
+    }
 
     public void mapTo(TextInputControl control, String key) {
         textInputControls.put(control, key);
@@ -22,7 +29,8 @@ public final class PreferenceMap {
     }
 
     public void dumpPreferences() {
-        textInputControls.forEach((control, key) -> Preferences.set(key, control.getText()));
         choiceBoxes.forEach((control, key) -> Preferences.set(key, control.getValue().toString()));
+        textInputControls.forEach((control, key) -> Preferences.set(key, control.getText()));
+        checkBoxes.forEach((control, key) -> Preferences.set(key, control.isSelected() ? "true" : "false"));
     }
 }

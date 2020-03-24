@@ -1,53 +1,68 @@
 package timelog.view;
 
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
-import timelog.view.customFX.ErrorAlert;
-import timelog.view.customFX.GridPane2C;
+import javafx.scene.control.*;
 import timelog.model.db.Database;
 import timelog.preferences.PreferenceMap;
+import timelog.view.customFX.ErrorAlert;
+import timelog.view.customFX.GridPane2C;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 
 public class LoginScene extends Scene {
-    public LoginScene(Runnable onLogin) {
+
+    private final PreferenceMap preferenceMap;
+    private final ChoiceBox<DriverChoice> driver;
+    private final TextField database;
+    private final TextField username;
+    private final PasswordField password;
+    private final Runnable onLogin;
+
+    public LoginScene(Runnable onLogin, boolean skipAllowed) {
         super(new GridPane2C(10));
+        this.onLogin = onLogin;
         GridPane2C gridPane2C = (GridPane2C) getRoot();
         gridPane2C.setPadding(new Insets(10));
-        PreferenceMap preferenceMap = new PreferenceMap();
+        preferenceMap = new PreferenceMap();
 
-        ChoiceBox<DriverChoice> driver = gridPane2C.addRow("Driver", new ChoiceBox<>());
+        driver = gridPane2C.addRow("Driver", new ChoiceBox<>());
         driver.getItems().addAll(DriverChoice.values());
         preferenceMap.mapTo(driver, "DatabaseDriver", DriverChoice::valueOf);
 
-        TextField database = gridPane2C.addRow("Database", new TextField());
+        database = gridPane2C.addRow("Database", new TextField());
         database.setPrefColumnCount(20);
         preferenceMap.mapTo(database, "DatabaseURL");
 
-        TextField username = gridPane2C.addRow("Username", new TextField());
+        username = gridPane2C.addRow("Username", new TextField());
         preferenceMap.mapTo(username, "DatabaseUsername");
 
-        PasswordField password = gridPane2C.addRow("Password", new PasswordField());
-        preferenceMap.mapTo(database, "DatabasePassword");
+        password = gridPane2C.addRow("Password", new PasswordField());
+        preferenceMap.mapTo(password, "DatabasePassword");
+
+        CheckBox automaticLogin = gridPane2C.addRow("", new CheckBox("login automatically"));
+        preferenceMap.mapTo(automaticLogin, "AutomaticLogin");
 
         Button login = gridPane2C.addRow("", new Button("Login"));
         login.setDefaultButton(true);
-        login.setOnAction(actionEvent -> {
-            Database.init(driver.getValue().name + ":" + database.getText(), username.getText(), password.getText());
-            try {
-                Database.execFile(Paths.get("db", "timelog.sql"));
-                preferenceMap.dumpPreferences();
-                onLogin.run();
-            } catch (SQLException | IOException e) {
-                ErrorAlert.show(e);
-            }
-        });
+        login.setOnAction(this::login);
+
+        if (skipAllowed && automaticLogin.isSelected()) Platform.runLater(login::fire);
+    }
+
+    private void login(ActionEvent event) {
+        Database.init(driver.getValue().name + ":" + database.getText(), username.getText(), password.getText());
+        try {
+            Database.execFile(Paths.get("db", "timelog.sql"));
+            preferenceMap.dumpPreferences();
+            onLogin.run();
+        } catch (SQLException | IOException e) {
+            ErrorAlert.show(e);
+        }
     }
 
     private enum DriverChoice {

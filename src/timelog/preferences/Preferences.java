@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Properties;
 
@@ -18,14 +18,14 @@ public final class Preferences {
     }
 
     public static void loadPropertiesFile(String fileName) throws IOException {
-        try (final InputStream inputStream = Files.newInputStream(Path.of(fileName), StandardOpenOption.CREATE)) {
+        try (final InputStream inputStream = Files.newInputStream(Paths.get(fileName), StandardOpenOption.CREATE)) {
             PROPERTIES.load(inputStream);
         } catch (NoSuchFileException ignored) {
         }
     }
 
     public static void savePropertiesFile(String fileName) throws IOException {
-        try (final OutputStream outputStream = Files.newOutputStream(Path.of(fileName), StandardOpenOption.CREATE)) {
+        try (final OutputStream outputStream = Files.newOutputStream(Paths.get(fileName), StandardOpenOption.CREATE)) {
             PROPERTIES.store(outputStream, "");
         }
     }

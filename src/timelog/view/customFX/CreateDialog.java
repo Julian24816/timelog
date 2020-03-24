@@ -1,10 +1,8 @@
-package timelog.view;
+package timelog.view.customFX;
 
 import javafx.beans.Observable;
 import javafx.scene.control.*;
 import timelog.model.LogEntry;
-import timelog.view.customFX.GridPane2C;
-import timelog.view.customFX.TimeTextField;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

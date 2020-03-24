@@ -12,8 +12,11 @@ import javafx.scene.text.Text;
 import timelog.model.LogEntry;
 
 import java.time.LocalTime;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class CurrentActivity extends VBox {
+    private final Timer timer = new Timer(true);
     private final Text activityName = new Text("No Current Activity");
     private final Text duration = new Text("--:--");
     private final Text startTime = new Text("--:--");
@@ -28,6 +31,13 @@ public class CurrentActivity extends VBox {
                 activityName.setText(getValue().getActivity());
                 startTime.setText(TimeTextField.TIME_FORMATTER.format(getValue().getStartTime()));
                 duration.setText(TimeTextField.TIME_FORMATTER.format(getValue().getDuration().addTo(LocalTime.MIN)));
+                timer.scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                        if (getValue() == null) cancel();
+                        else duration.setText(TimeTextField.TIME_FORMATTER.format(getValue().getDuration().addTo(LocalTime.MIN)));
+                    }
+                }, 1000, 1000);
             }
         }
     };

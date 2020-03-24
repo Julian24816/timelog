@@ -1,6 +1,9 @@
 package timelog.model.db;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,11 +12,6 @@ import java.util.function.Consumer;
 
 public class Factory<T extends DatabaseObject> {
     private static Consumer<Throwable> errorHandler = Throwable::printStackTrace;
-
-    public static void setErrorHandler(Consumer<Throwable> errorHandler) {
-        Factory.errorHandler = Objects.requireNonNull(errorHandler);
-    }
-
     private final TableDefinition<T> definition;
     private final ResultViewConverter<T> getItemFromView;
 
@@ -22,19 +20,22 @@ public class Factory<T extends DatabaseObject> {
         this.getItemFromView = getItemFromView;
     }
 
-    public Collection<T> getAll() {
-        final String sql = definition.getAllSQL();
-        final List<T> list = new LinkedList<>();
+    public static void setErrorHandler(Consumer<Throwable> errorHandler) {
+        Factory.errorHandler = Objects.requireNonNull(errorHandler);
+    }
+
+    public boolean update(T obj) {
+        final String sql = definition.getUpdateSQL();
         try (final Connection connection = Database.getConnection();
-             final Statement statement = connection.createStatement()) {
-            try (final ResultSet resultSet = statement.executeQuery(sql)) {
-                final ResultView view = new ResultView(resultSet);
-                while (resultSet.next()) list.add(getItemFromView.get(view));
-            }
+             final PreparedStatement statement = connection.prepareStatement(sql)) {
+            definition.setSQLParams(statement, obj);
+            statement.setInt(definition.getNumberOfColumns() + 1, obj.getId());
+            final int affectedRows = statement.executeUpdate();
+            return affectedRows > 0;
         } catch (SQLException e) {
             errorHandler.accept(e);
         }
-        return list;
+        return false;
     }
 
     public T createNew(Object... params) {
@@ -53,13 +54,19 @@ public class Factory<T extends DatabaseObject> {
         return null;
     }
 
-    public T getForId(int id) {
-        final String sql = definition.getForIdSQL();
+    public Collection<T> getAll() {
+        return select(this::selectAll, null, 0, null);
+    }
+
+    protected final <R> R select(Selector<R> selector, String where, int params, ParameterSetter paramSetter) {
+        if (params < 0) throw new IllegalArgumentException("params must be >= 0");
+        String sql = definition.getBaseSelect();
+        if (where != null && !where.isEmpty()) sql += " WHERE " + where;
         try (final Connection connection = Database.getConnection();
              final PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, id);
+            for (int i = 1; i <= params; i++) paramSetter.set(statement, i);
             try (final ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) return getItemFromView.get(new ResultView(resultSet));
+                return selector.select(resultSet);
             }
         } catch (SQLException e) {
             errorHandler.accept(e);
@@ -67,30 +74,23 @@ public class Factory<T extends DatabaseObject> {
         return null;
     }
 
-    protected T getFirstWhere(String where) {
-        final String sql = definition.getAllSQL() + " WHERE " + where;
-        try (final Connection connection = Database.getConnection();
-             final Statement statement = connection.createStatement()) {
-            try (final ResultSet resultSet = statement.executeQuery(sql)) {
-                if (resultSet.next()) return getItemFromView.get(new ResultView(resultSet));
-            }
-        } catch (SQLException e) {
-            errorHandler.accept(e);
-        }
+    protected final Collection<T> selectAll(ResultSet resultSet) throws SQLException {
+        final ResultView view = new ResultView(resultSet);
+        final List<T> list = new LinkedList<>();
+        while (resultSet.next()) list.add(getItemFromView.get(view));
+        return list;
+    }
+
+    public T getForId(int id) {
+        return select(this::selectFirst, "id=?", 1, (preparedStatement, param) -> preparedStatement.setInt(param, id));
+    }
+
+    protected final T selectFirst(ResultSet resultSet) throws SQLException {
+        if (resultSet.next()) return getItemFromView.get(new ResultView(resultSet));
         return null;
     }
 
-    public boolean save(T obj) {
-        final String sql = definition.getUpdateSQL();
-        try (final Connection connection = Database.getConnection();
-             final PreparedStatement statement = connection.prepareStatement(sql)) {
-            definition.setSQLParams(statement, obj);
-            statement.setInt(definition.getNumberOfColumns() + 1, obj.getId());
-            final int affectedRows = statement.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            errorHandler.accept(e);
-        }
-        return false;
+    protected interface Selector<R> {
+        R select(ResultSet resultSet) throws SQLException;
     }
 }

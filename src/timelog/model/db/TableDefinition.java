@@ -58,12 +58,8 @@ public final class TableDefinition<T extends DatabaseObject> {
         return new TableDefinition<>(this, anotherColumn, type, getter);
     }
 
-    String getAllSQL() {
+    String getBaseSelect() {
         return "SELECT id," + columnNames + " FROM " + tableName;
-    }
-
-    String getForIdSQL() {
-        return "SELECT * FROM " + tableName + " WHERE id=?";
     }
 
     String getCreateSQL() {

@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-final class ResultView {
+public final class ResultView {
     private final Map<String, Integer> map = new HashMap<>();
     private final ResultSet resultSet;
 
