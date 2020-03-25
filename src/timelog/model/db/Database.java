@@ -6,13 +6,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * holds a connection pool
  */
 public final class Database {
+    private static Consumer<Throwable> errorHandler = Throwable::printStackTrace;
     private static BasicDataSource dataSource;
 
     private Database() {
@@ -28,19 +31,30 @@ public final class Database {
         dataSource.setPassword(password);
     }
 
-    public static void execFile(Path filename) throws SQLException, IOException {
-        try (final Connection connection = getConnection()) {
-            for (String sql : Files.readString(filename).split(";")) {
-                sql = sql.strip();
-                if (!sql.isEmpty()) try (final Statement statement = connection.createStatement()) {
-                    statement.execute(sql);
-                }
-            }
+    public static void execFile(Path filename) throws IOException {
+        for (String sql : Files.readString(filename).split(";")) {
+            sql = sql.strip();
+            if (!sql.isEmpty()) execute(sql, PreparedStatement::execute, null);
         }
     }
 
-    static Connection getConnection() throws SQLException {
+    public static <R> R execute(String sql, SQLFunction<PreparedStatement, R> executor, R errorValue) {
+        try (final Connection connection = getConnection();
+             final PreparedStatement statement = connection.prepareStatement(sql)) {
+            return executor.apply(statement);
+        } catch (SQLException e) {
+            errorHandler.accept(e);
+            return errorValue;
+        }
+    }
+
+    private static Connection getConnection() throws SQLException {
         if (dataSource == null) throw new IllegalStateException("dataSource not initialized");
         return dataSource.getConnection();
     }
+
+    public static void setErrorHandler(Consumer<Throwable> errorHandler) {
+        Database.errorHandler = Objects.requireNonNull(errorHandler);
+    }
+
 }

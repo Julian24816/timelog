@@ -1,12 +1,13 @@
-package timelog.view.customFX;
+package timelog.view.edit;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.TextField;
-import timelog.model.db.DatabaseObject;
+import timelog.model.db.ModelObject;
+import timelog.view.customFX.GridPane2C;
 
-abstract class ObjectDialog<T extends DatabaseObject<T>> extends Dialog<T> {
+abstract class ObjectDialog<T extends ModelObject<T>> extends Dialog<T> {
 
     protected final T editedObject;
 

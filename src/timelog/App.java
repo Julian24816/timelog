@@ -2,7 +2,7 @@ package timelog;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
-import timelog.model.db.Factory;
+import timelog.model.db.Database;
 import timelog.preferences.Preferences;
 import timelog.view.LoginScene;
 import timelog.view.MainScene;
@@ -26,7 +26,7 @@ public class App extends Application {
     public void init() throws IOException {
         Preferences.loadPropertiesFile(Preferences.DEFAULTS_FILE_NAME);
         Preferences.loadPropertiesFile(Preferences.FILE_NAME);
-        Factory.setErrorHandler(ErrorAlert::show);
+        Database.setErrorHandler(ErrorAlert::show);
     }
 
     @Override

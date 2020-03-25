@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public final class ResultView {
     private final Map<String, Integer> map = new HashMap<>();
@@ -32,5 +33,11 @@ public final class ResultView {
     public LocalDateTime getDateTime(String key) throws SQLException {
         final Timestamp timestamp = resultSet.getTimestamp(getIndex(key));
         return timestamp == null ? null : timestamp.toLocalDateTime();
+    }
+
+    public Optional<Integer> getOptionalInt(String key) throws SQLException {
+        int result = resultSet.getInt(getIndex(key));
+        if (resultSet.wasNull()) return Optional.empty();
+        return Optional.of(result);
     }
 }

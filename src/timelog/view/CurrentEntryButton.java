@@ -1,25 +1,26 @@
-package timelog.view.customFX;
+package timelog.view;
 
 import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import timelog.model.LogEntry;
+import timelog.view.edit.LogEntryDialog;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-public class CurrentActivityButton extends Button {
+public class CurrentEntryButton extends Button {
     private final LogEntryList logEntryList;
-    private final CurrentActivity currentActivity;
+    private final CurrentEntryDisplay currentEntryDisplay;
 
-    public CurrentActivityButton(LogEntryList logEntryList, CurrentActivity currentActivity) {
-        super("Start");
+    public CurrentEntryButton(LogEntryList logEntryList, CurrentEntryDisplay currentEntryDisplay) {
+        super("New");
         this.logEntryList = logEntryList;
-        this.currentActivity = currentActivity;
+        this.currentEntryDisplay = currentEntryDisplay;
         setOnAction(this::onButtonPress);
 
-        currentActivity.activityProperty().addListener(this::currentActivityChanged);
+        currentEntryDisplay.activityProperty().addListener(this::currentActivityChanged);
         currentActivityChanged(null);
 
         setMaxHeight(Double.MAX_VALUE);
@@ -27,24 +28,24 @@ public class CurrentActivityButton extends Button {
     }
 
     private void currentActivityChanged(Observable observable) {
-        setText(currentActivity.getActivity() == null ? "Start" : "Stop");
+        setText(currentEntryDisplay.getActivity() == null ? "New" : "Stop");
     }
 
     private void onButtonPress(ActionEvent event) {
-        if (currentActivity.getActivity() == null) {
+        if (currentEntryDisplay.getActivity() == null) {
             final Optional<LogEntry> logEntry = new LogEntryDialog().showAndWait();
             logEntry.ifPresent(value -> {
-                if (value.getEnd() == null) currentActivity.setActivity(value);
+                if (value.getEnd() == null) currentEntryDisplay.setActivity(value);
                 else if (value.getEnd().toLocalDate().equals(LocalDate.now())) logEntryList.getEntries().add(value);
             });
         } else {
             final Optional<LocalDateTime> endTime = new EndTimeDialog().showAndWait();
             endTime.ifPresent(end -> {
-                currentActivity.getActivity().endProperty().setValue(end);
-                if (LogEntry.FACTORY.update(currentActivity.getActivity())) {
-                    if (currentActivity.getActivity().getEnd().toLocalDate().equals(LocalDate.now()))
-                        logEntryList.getEntries().add(currentActivity.getActivity());
-                    currentActivity.setActivity(LogEntry.FACTORY.getUnfinishedEntry());
+                currentEntryDisplay.getActivity().endProperty().setValue(end);
+                if (LogEntry.FACTORY.update(currentEntryDisplay.getActivity())) {
+                    if (currentEntryDisplay.getActivity().getEnd().toLocalDate().equals(LocalDate.now()))
+                        logEntryList.getEntries().add(currentEntryDisplay.getActivity());
+                    currentEntryDisplay.setActivity(LogEntry.FACTORY.getUnfinishedEntry());
                 }
             });
         }

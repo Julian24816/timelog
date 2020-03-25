@@ -18,7 +18,7 @@ public class TimeText extends Text {
         }
     };
 
-    TimeText() {
+    public TimeText() {
         super();
         this.value.setValue(LocalDateTime.MIN);
     }

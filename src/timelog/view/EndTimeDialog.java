@@ -1,4 +1,4 @@
-package timelog.view.customFX;
+package timelog.view;
 
 import javafx.beans.Observable;
 import javafx.geometry.Insets;
@@ -6,6 +6,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
+import timelog.view.customFX.GridPane2C;
+import timelog.view.customFX.TimeTextField;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

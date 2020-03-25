@@ -60,7 +60,7 @@ public class LoginScene extends Scene {
             Database.execFile(Paths.get("db", "timelog.sql"));
             preferenceMap.dumpPreferences();
             onLogin.run();
-        } catch (SQLException | IOException e) {
+        } catch (IOException e) {
             ErrorAlert.show(e);
         }
     }
