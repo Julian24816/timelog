@@ -11,6 +11,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import timelog.model.LogEntry;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -18,6 +20,7 @@ import java.util.TimerTask;
 public class CurrentActivity extends VBox {
     private final Timer timer = new Timer(true);
     private final Text activityName = new Text("No Current Activity");
+    private final Text activityWhat = new Text("");
     private final Text duration = new Text("--:--");
     private final Text startTime = new Text("--:--");
     private final ObjectProperty<LogEntry> activity = new SimpleObjectProperty<>(this, "current activity") {
@@ -25,20 +28,29 @@ public class CurrentActivity extends VBox {
         protected void invalidated() {
             if (getValue() == null) {
                 activityName.setText("No Current Activity");
+                activityWhat.setText("");
                 startTime.setText("--:--");
                 duration.setText("--:--");
             } else {
-                activityName.setText(getValue().getActivity());
-                startTime.setText(TimeTextField.TIME_FORMATTER.format(getValue().getStartTime()));
-                duration.setText(TimeTextField.TIME_FORMATTER.format(getValue().getDuration().addTo(LocalTime.MIN)));
+                activityName.setText(getValue().getActivity().getName());
+                activityWhat.setText(getValue().getWhat());
+                startTime.setText(TimeTextField.TIME_FORMATTER.format(getValue().getStart().toLocalTime()));
+                setDuration();
                 timer.scheduleAtFixedRate(new TimerTask() {
                     @Override
                     public void run() {
                         if (getValue() == null) cancel();
-                        else duration.setText(TimeTextField.TIME_FORMATTER.format(getValue().getDuration().addTo(LocalTime.MIN)));
+                        else setDuration();
                     }
-                }, 1000, 1000);
+                }, 500, 500);
             }
+        }
+
+        private void setDuration() {
+            Duration duration;
+            if (getValue().getEnd() == null) duration = Duration.between(getValue().getStart(), LocalDateTime.now());
+            else duration = Duration.between(getValue().getEnd(), getValue().getStart());
+            CurrentActivity.this.duration.setText(TimeTextField.TIME_FORMATTER.format(duration.addTo(LocalTime.MIN)));
         }
     };
 
@@ -59,8 +71,11 @@ public class CurrentActivity extends VBox {
         spacer.setPrefWidth(30);
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        activityWhat.wrappingWidthProperty().bind(widthProperty());
+
         getChildren().add(new HBox(title, label, startTime));
         getChildren().add(new HBox(activityName, spacer, duration));
+        getChildren().add(activityWhat);
     }
 
     public ObjectProperty<LogEntry> activityProperty() {

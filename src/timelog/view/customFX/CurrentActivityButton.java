@@ -5,16 +5,17 @@ import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import timelog.model.LogEntry;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 public class CurrentActivityButton extends Button {
-    private final ActivityList activityList;
+    private final LogEntryList logEntryList;
     private final CurrentActivity currentActivity;
 
-    public CurrentActivityButton(ActivityList activityList, CurrentActivity currentActivity) {
+    public CurrentActivityButton(LogEntryList logEntryList, CurrentActivity currentActivity) {
         super("Start");
-        this.activityList = activityList;
+        this.logEntryList = logEntryList;
         this.currentActivity = currentActivity;
         setOnAction(this::onButtonPress);
 
@@ -31,15 +32,19 @@ public class CurrentActivityButton extends Button {
 
     private void onButtonPress(ActionEvent event) {
         if (currentActivity.getActivity() == null) {
-            final Optional<LogEntry> logEntry = new CreateDialog().showAndWait();
-            logEntry.ifPresent(currentActivity::setActivity);
+            final Optional<LogEntry> logEntry = new LogEntryDialog().showAndWait();
+            logEntry.ifPresent(value -> {
+                if (value.getEnd() == null) currentActivity.setActivity(value);
+                else if (value.getEnd().toLocalDate().equals(LocalDate.now())) logEntryList.getEntries().add(value);
+            });
         } else {
             final Optional<LocalDateTime> endTime = new EndTimeDialog().showAndWait();
             endTime.ifPresent(end -> {
                 currentActivity.getActivity().endProperty().setValue(end);
                 if (LogEntry.FACTORY.update(currentActivity.getActivity())) {
-                    activityList.getEntries().add(currentActivity.getActivity());
-                    currentActivity.setActivity(null);
+                    if (currentActivity.getActivity().getEnd().toLocalDate().equals(LocalDate.now()))
+                        logEntryList.getEntries().add(currentActivity.getActivity());
+                    currentActivity.setActivity(LogEntry.FACTORY.getUnfinishedEntry());
                 }
             });
         }

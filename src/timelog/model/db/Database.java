@@ -30,10 +30,12 @@ public final class Database {
 
     public static void execFile(Path filename) throws SQLException, IOException {
         try (final Connection connection = getConnection()) {
-            for (String sql : Files.readString(filename).split(";"))
-                try (final Statement statement = connection.createStatement()) {
+            for (String sql : Files.readString(filename).split(";")) {
+                sql = sql.strip();
+                if (!sql.isEmpty()) try (final Statement statement = connection.createStatement()) {
                     statement.execute(sql);
                 }
+            }
         }
     }
 

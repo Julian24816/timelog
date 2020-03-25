@@ -26,52 +26,63 @@ public class Factory<T extends DatabaseObject> {
 
     public boolean update(T obj) {
         final String sql = definition.getUpdateSQL();
-        try (final Connection connection = Database.getConnection();
-             final PreparedStatement statement = connection.prepareStatement(sql)) {
+        return execute(sql, statement -> {
             definition.setSQLParams(statement, obj);
             statement.setInt(definition.getNumberOfColumns() + 1, obj.getId());
             final int affectedRows = statement.executeUpdate();
             return affectedRows > 0;
+        }, false);
+    }
+
+    protected <R> R execute(String sql, StatementExecutor<R> executor, R errorValue) {
+        try (final Connection connection = Database.getConnection();
+             final PreparedStatement statement = connection.prepareStatement(sql)) {
+            return executor.execute(statement);
         } catch (SQLException e) {
             errorHandler.accept(e);
+            return errorValue;
         }
-        return false;
     }
 
     public T createNew(Object... params) {
         final String sql = definition.getCreateSQL();
-        try (final Connection connection = Database.getConnection();
-             final PreparedStatement statement = connection.prepareStatement(sql)) {
+        return execute(sql, statement -> {
             definition.setSQLParams(statement, params);
             statement.execute();
             try (final ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                if (generatedKeys.next())
-                    return getForId(generatedKeys.getInt(1));
+                if (generatedKeys.next()) return getForId(generatedKeys.getInt(1));
             }
-        } catch (SQLException e) {
-            errorHandler.accept(e);
-        }
-        return null;
+            return null;
+        }, null);
     }
 
-    public Collection<T> getAll() {
-        return select(this::selectAll, null, 0, null);
+    public T getForId(int id) {
+        return select(this::selectFirst, "id=?", 1, (preparedStatement, param) -> preparedStatement.setInt(param, id));
     }
 
     protected final <R> R select(Selector<R> selector, String where, int params, ParameterSetter paramSetter) {
         if (params < 0) throw new IllegalArgumentException("params must be >= 0");
         String sql = definition.getBaseSelect();
         if (where != null && !where.isEmpty()) sql += " WHERE " + where;
-        try (final Connection connection = Database.getConnection();
-             final PreparedStatement statement = connection.prepareStatement(sql)) {
+        return execute(sql, statement -> {
             for (int i = 1; i <= params; i++) paramSetter.set(statement, i);
             try (final ResultSet resultSet = statement.executeQuery()) {
                 return selector.select(resultSet);
             }
-        } catch (SQLException e) {
-            errorHandler.accept(e);
-        }
+        }, null);
+    }
+
+    protected final T selectFirst(ResultSet resultSet) throws SQLException {
+        if (resultSet.next()) return getItemFromView.get(new ResultView(resultSet));
         return null;
+    }
+
+    public Collection<T> getAll() {
+        return select(this::selectAll, null);
+    }
+
+    protected final <R> R select(Selector<R> selector, String where) {
+        return select(selector, where, 0, null);
     }
 
     protected final Collection<T> selectAll(ResultSet resultSet) throws SQLException {
@@ -81,13 +92,8 @@ public class Factory<T extends DatabaseObject> {
         return list;
     }
 
-    public T getForId(int id) {
-        return select(this::selectFirst, "id=?", 1, (preparedStatement, param) -> preparedStatement.setInt(param, id));
-    }
-
-    protected final T selectFirst(ResultSet resultSet) throws SQLException {
-        if (resultSet.next()) return getItemFromView.get(new ResultView(resultSet));
-        return null;
+    protected interface StatementExecutor<R> {
+        R execute(PreparedStatement statement) throws SQLException;
     }
 
     protected interface Selector<R> {

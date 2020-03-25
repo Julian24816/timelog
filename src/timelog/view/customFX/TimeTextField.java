@@ -14,8 +14,10 @@ public class TimeTextField extends TextField {
     private final ReadOnlyObjectWrapper<LocalTime> value;
 
     public TimeTextField(LocalTime value) {
-        super(TIME_FORMATTER.format(value));
+        super();
         this.value = new ReadOnlyObjectWrapper<>(this, "time", value);
+        if (value != null) setText(TIME_FORMATTER.format(value));
+
         setPromptText("hh:mm");
         textProperty().addListener(observable -> {
             try {
@@ -36,6 +38,7 @@ public class TimeTextField extends TextField {
     }
 
     public void setValue(LocalTime value) {
-        setText(TIME_FORMATTER.format(value));
+        if (value != null) setText(TIME_FORMATTER.format(value));
+        else setText("");
     }
 }

@@ -5,6 +5,8 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -13,14 +15,14 @@ import timelog.model.LogEntry;
 
 import java.util.Objects;
 
-public class ActivityList extends ScrollPane {
+public class LogEntryList extends ScrollPane {
 
     private final VBox vBox = new VBox();
-    private final Text placeholder = new Text("no activities on this day");
+    private final Text placeholder = new Text("no activities");
 
     private final ObservableList<LogEntry> entries = FXCollections.observableArrayList();
 
-    public ActivityList() {
+    public LogEntryList() {
         super();
         VBox.setMargin(placeholder, new Insets(20, 20, 20, 20));
         vBox.getChildren().add(placeholder);
@@ -37,8 +39,8 @@ public class ActivityList extends ScrollPane {
             } else if (c.wasUpdated()) {
                 ErrorAlert.show(new UnsupportedOperationException("entries list must not be updated"));
             } else {
-                for (LogEntry added : c.getAddedSubList()) ActivityList.this.addEntry(added);
-                for (LogEntry removed : c.getRemoved()) ActivityList.this.removeEntry(removed);
+                for (LogEntry added : c.getAddedSubList()) LogEntryList.this.addEntry(added);
+                for (LogEntry removed : c.getRemoved()) LogEntryList.this.removeEntry(removed);
             }
         }
     }
@@ -69,11 +71,20 @@ public class ActivityList extends ScrollPane {
             start.valueProperty().bind(entry.startProperty());
             final TimeText end = new TimeText();
             end.valueProperty().bind(entry.endProperty());
+            final Text activityName = new Text();
+            activityName.textProperty().bind(entry.getActivity().nameProperty());
+            entry.activityProperty().addListener(observable -> activityName.textProperty().bind(entry.getActivity().nameProperty()));
+            activityName.setFont(new Font(20));
             final Text what = new Text();
-            what.textProperty().bind(entry.activityProperty());
-            what.setFont(new Font(20));
+            what.textProperty().bind(entry.whatProperty());
+            getChildren().addAll(new VBox(start, end), activityName, what);
 
-            getChildren().addAll(new VBox(start, end), what);
+            setOnMouseClicked(this::onMouseClicked);
+        }
+
+        private void onMouseClicked(MouseEvent mouseEvent) {
+            if (mouseEvent.getClickCount() != 2 || !mouseEvent.getButton().equals(MouseButton.PRIMARY)) return;
+            new LogEntryDialog(entry).show();
         }
 
         @Override
