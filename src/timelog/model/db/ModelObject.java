@@ -1,17 +1,21 @@
 package timelog.model.db;
 
+import javafx.beans.value.ObservableStringValue;
+
 import java.util.Objects;
 
-public abstract class ModelObject<T extends ModelObject<?>> implements Comparable<T>,  DatabaseObject {
+public abstract class ModelObject<T extends ModelObject<?>> implements Comparable<T>, DatabaseObject {
     private final int id;
 
     protected ModelObject(int id) {
         this.id = id;
     }
 
-    public String getDisplayName() {
-        return toString();
+    public final String getDisplayName() {
+        return displayNameProperty().get();
     }
+
+    public abstract ObservableStringValue displayNameProperty();
 
     @Override
     public abstract String toString();
@@ -28,11 +32,6 @@ public abstract class ModelObject<T extends ModelObject<?>> implements Comparabl
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public int compareTo(T o) {
-        return Integer.compare(id, o.getId());
     }
 
     public final int getId() {

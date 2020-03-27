@@ -1,7 +1,11 @@
 package timelog.model;
 
+import javafx.beans.binding.StringBinding;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableStringValue;
 import timelog.model.db.*;
 
 import java.sql.PreparedStatement;
@@ -12,28 +16,35 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class Activity extends ModelObject<Activity> {
+    public static final String DEFAULT_COLOR = "#DDD";
     public static final ActivityFactory FACTORY = new ActivityFactory();
     private final StringProperty name = new SimpleStringProperty(this, "name");
-    private int parentId;
+    private final StringProperty color = new SimpleStringProperty(this, "color");
+    private final IntegerProperty parentId = new SimpleIntegerProperty(this, "parent");
+    private final ObservableStringValue displayName = new StringBinding() {
+        {
+            bind(name, parentId);
+        }
 
-    private Activity(int id, int parentId, String name) {
+        @Override
+        protected String computeValue() {
+            if (getId() == 0) return "(" + name.get() + ")";
+            if (parentId.get() == 0) return name.get();
+            return "  ".repeat(getDepth() - 2) + "- " + name.get();
+        }
+    };
+
+    private Activity(int id, int parentId, String name, String color) {
         super(id);
-        this.parentId = parentId;
+        this.parentId.setValue(id == parentId ? 0 : parentId);
         this.name.setValue(Objects.requireNonNull(name));
+        this.color.setValue(Objects.requireNonNull(color));
     }
 
     private int getDepth() {
         if (getId() == 0) return 0;
+        if (parentId.get() == 0) return 1;
         else return getParent().getDepth() + 1;
-    }
-
-    public Activity getParent() {
-        return FACTORY.getForId(parentId);
-    }
-
-    public void setParent(Activity parent) {
-        if (getId() == 0) return;
-        parentId = Objects.requireNonNull(parent).getId();
     }
 
     public StringProperty nameProperty() {
@@ -48,12 +59,30 @@ public final class Activity extends ModelObject<Activity> {
         name.setValue(value);
     }
 
+    public StringProperty colorProperty() {
+        return color;
+    }
+
+    public String getColor() {
+        return color.get();
+    }
+
+    public void setColor(String value) {
+        color.setValue(value);
+    }
+
+    @Override
+    public ObservableStringValue displayNameProperty() {
+        return displayName;
+    }
+
     @Override
     public String toString() {
         return "Activity{" +
                 "id=" + getId() +
-                ", parentId=" + parentId +
+                ", parentId=" + parentId.get() +
                 ", name=" + name.get() +
+                ", color=" + color.get() +
                 '}';
     }
 
@@ -76,10 +105,21 @@ public final class Activity extends ModelObject<Activity> {
         return parent;
     }
 
-    @Override
-    public String getDisplayName() {
+    public String getFullName() {
+        //TODO convert to binding
         if (getId() == 0) return "(" + name.get() + ")";
-        return "- ".repeat(getDepth() - 1) + name.get();
+        if (parentId.get() == 0) return name.get();
+        return getParent().getFullName() + " > " + name.get();
+    }
+
+    public Activity getParent() {
+        return FACTORY.getForId(parentId.get());
+    }
+
+    public void setParent(Activity parent) {
+        if (getId() == 0) return;
+        if (getId() == parent.getId()) throw new IllegalArgumentException("activity can't be parent of itself");
+        parentId.setValue(Objects.requireNonNull(parent).getId());
     }
 
     public static final class ActivityFactory extends ModelFactory<Activity> {
@@ -89,16 +129,19 @@ public final class Activity extends ModelObject<Activity> {
             super(view -> new Activity(
                             view.getInt("id"),
                             view.getInt("parent"),
-                            view.getString("name")
+                            view.getString("name"),
+                            view.getString("color")
                     ),
                     new ModelTableDefinition<Activity>("activity")
                             .withColumn("parent", TableDefinition.ColumnType.getForeignKeyColumn(Activity.class), Activity::getParent)
                             .withColumn("name", TableDefinition.ColumnType.STRING, Activity::getName)
+                            .withColumn("color", TableDefinition.ColumnType.STRING, Activity::getColor)
             );
 
             final boolean rootExists = selectWhere(ResultSet::next, "id=0");
             if (!rootExists)
-                Database.execute("INSERT INTO activity VALUES (0, 0, 'Activity');", PreparedStatement::execute, null);
+                Database.execute("INSERT INTO activity VALUES (0, 0, 'Activity', '" + DEFAULT_COLOR + "');",
+                        PreparedStatement::execute, null);
         }
 
         @Override

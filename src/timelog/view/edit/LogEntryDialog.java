@@ -28,7 +28,7 @@ public class LogEntryDialog extends ObjectDialog<LogEntry> {
     public LogEntryDialog(LogEntry editedObject) {
         super("Log Entry", editedObject, true);
 
-        activity = gridPane2C.addRow("Type", new CreatingChoiceBox<>(
+        activity = gridPane2C.addRow("Type", CreatingChoiceBox.simple(
                 Activity.FACTORY.getAll(), ActivityDialog::new, ActivityDialog::new));
         activity.setValue(Activity.FACTORY.getForId(0));
         activity.valueProperty().addListener(this::invalidated);
@@ -37,8 +37,8 @@ public class LogEntryDialog extends ObjectDialog<LogEntry> {
         what.textProperty().addListener(this::invalidated);
         what.requestFocus();
 
-        meansOfTransport = gridPane2C.addRow("Transport", new CreatingChoiceBox<>(
-                MeansOfTransport.FACTORY.getAll(), MeansOfTransportDialog::new, MeansOfTransportDialog::new, true));
+        meansOfTransport = gridPane2C.addRow("Transport", CreatingChoiceBox.nullable(
+                MeansOfTransport.FACTORY.getAll(), MeansOfTransportDialog::new, MeansOfTransportDialog::new));
 
         people = gridPane2C.addRow("People", new AssociationFlowPane<>(
                 QualityTime.FACTORY, editedObject, Person.FACTORY.getAll(), PersonDialog::new, PersonDialog::new));

@@ -20,34 +20,34 @@ public class CurrentEntryButton extends Button {
         this.currentEntryDisplay = currentEntryDisplay;
         setOnAction(this::onButtonPress);
 
-        currentEntryDisplay.activityProperty().addListener(this::currentActivityChanged);
+        currentEntryDisplay.entryProperty().addListener(this::currentActivityChanged);
         currentActivityChanged(null);
 
         setMaxHeight(Double.MAX_VALUE);
         heightProperty().addListener((observable, oldValue, newValue) -> setPrefWidth(newValue.doubleValue()));
     }
 
-    private void currentActivityChanged(Observable observable) {
-        setText(currentEntryDisplay.getActivity() == null ? "New" : "Stop");
-    }
-
     private void onButtonPress(ActionEvent event) {
-        if (currentEntryDisplay.getActivity() == null) {
+        if (currentEntryDisplay.getEntry() == null) {
             final Optional<LogEntry> logEntry = new LogEntryDialog().showAndWait();
             logEntry.ifPresent(value -> {
-                if (value.getEnd() == null) currentEntryDisplay.setActivity(value);
+                if (value.getEnd() == null) currentEntryDisplay.setEntry(value);
                 else if (value.getEnd().toLocalDate().equals(LocalDate.now())) logEntryList.getEntries().add(value);
             });
         } else {
             final Optional<LocalDateTime> endTime = new EndTimeDialog().showAndWait();
             endTime.ifPresent(end -> {
-                currentEntryDisplay.getActivity().endProperty().setValue(end);
-                if (LogEntry.FACTORY.update(currentEntryDisplay.getActivity())) {
-                    if (currentEntryDisplay.getActivity().getEnd().toLocalDate().equals(LocalDate.now()))
-                        logEntryList.getEntries().add(currentEntryDisplay.getActivity());
-                    currentEntryDisplay.setActivity(LogEntry.FACTORY.getUnfinishedEntry());
+                currentEntryDisplay.getEntry().endProperty().setValue(end);
+                if (LogEntry.FACTORY.update(currentEntryDisplay.getEntry())) {
+                    if (currentEntryDisplay.getEntry().getEnd().toLocalDate().equals(LocalDate.now()))
+                        logEntryList.getEntries().add(currentEntryDisplay.getEntry());
+                    currentEntryDisplay.setEntry(LogEntry.FACTORY.getUnfinishedEntry());
                 }
             });
         }
+    }
+
+    private void currentActivityChanged(Observable observable) {
+        setText(currentEntryDisplay.getEntry() == null ? "New" : "Stop");
     }
 }

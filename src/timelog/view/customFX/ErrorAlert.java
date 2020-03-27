@@ -1,5 +1,6 @@
 package timelog.view.customFX;
 
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
 
@@ -18,6 +19,6 @@ public class ErrorAlert extends Alert {
     }
 
     public static void show(Throwable e) {
-        new ErrorAlert(e).show();
+        Platform.runLater(() -> new ErrorAlert(e).show());
     }
 }

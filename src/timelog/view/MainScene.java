@@ -18,8 +18,8 @@ public class MainScene extends Scene {
         final LogEntryList logEntryList = new LogEntryList();
         logEntryList.getEntries().addAll(LogEntry.FACTORY.getAllFinishedOn(LocalDate.now()));
 
-        final CurrentEntryDisplay currentEntryDisplay = new CurrentEntryDisplay(null);
-        currentEntryDisplay.setActivity(LogEntry.FACTORY.getUnfinishedEntry());
+        final CurrentEntryDisplay currentEntryDisplay = new CurrentEntryDisplay(null, logEntryList);
+        currentEntryDisplay.setEntry(LogEntry.FACTORY.getUnfinishedEntry());
         HBox.setHgrow(currentEntryDisplay, Priority.ALWAYS);
 
         final CurrentEntryButton button = new CurrentEntryButton(logEntryList, currentEntryDisplay);

@@ -14,31 +14,29 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.util.StringConverter;
-import timelog.model.db.DatabaseObject;
 import timelog.model.db.ModelObject;
 
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class CreatingChoiceBox<T extends ModelObject<T>> extends HBox {
 
     private final ReadOnlyObjectWrapper<T> valueProperty = new ReadOnlyObjectWrapper<>();
-    private final ObservableList<T> items = FXCollections.observableArrayList();
+    private final ObservableList<T> choices = FXCollections.observableArrayList();
 
     private final ChoiceBox<Entry<T>> choiceBox;
     private final Supplier<Dialog<T>> newDialog;
     private final Function<T, Dialog<T>> editDialog;
+    private final Consumer<T> onNew;
 
-    public CreatingChoiceBox(Collection<T> items) {
-        this(items, null, null, false);
-    }
-
-    public CreatingChoiceBox(Collection<T> items, Supplier<Dialog<T>> newDialog, Function<T, Dialog<T>> editDialog, boolean allowSelectNull) {
+    private CreatingChoiceBox(Collection<T> choices, Supplier<Dialog<T>> newDialog, Consumer<T> onNew, Function<T, Dialog<T>> editDialog, boolean allowSelectNull) {
         super(10);
         this.newDialog = newDialog;
+        this.onNew = onNew == null ? this::setValue : onNew;
         this.editDialog = editDialog;
 
         choiceBox = new ChoiceBox<>();
@@ -50,27 +48,18 @@ public class CreatingChoiceBox<T extends ModelObject<T>> extends HBox {
         if (newDialog != null) choiceBox.getItems().add(Entry.placeholder());
         if (editDialog != null) choiceBox.setOnMouseClicked(this::doubleClick);
 
-        this.items.addListener(this::onListChanged);
-        this.items.addAll(items);
+        this.choices.addListener(this::onListChanged);
+        this.choices.addAll(choices);
 
         if (editDialog != null) addButton("Edit", this::showEditDialog);
         if (allowSelectNull) addButton("Remove", () -> choiceBox.getSelectionModel().select(null));
     }
 
-    private void selectionChanged(ObservableValue<?> observableValue, Entry<T> oldValue, Entry<T> newValue) {
-        if (newValue == null) valueProperty.set(null);
-        else if (newValue.isPlaceholder()) {
-            assert newDialog != null;
-            // show a new dialog when the "new..." placeholder is selected, then select result or previous value
-            final Optional<T> optionalItem = newDialog.get().showAndWait();
-            if (optionalItem.isPresent()) {
-                final Entry<T> entry = Entry.of(optionalItem.get());
-                choiceBox.getItems().add(entry);
-                FXCollections.sort(choiceBox.getItems());
-                choiceBox.setValue(entry);
-            } else choiceBox.getSelectionModel().select(oldValue);
-        } else {
-            valueProperty.set(newValue.get());
+    public void setValue(T value) {
+        if (value == null) choiceBox.getSelectionModel().select(null);
+        else {
+            if (!choices.contains(value)) choices.add(value);
+            choiceBox.getSelectionModel().select(Entry.of(value));
         }
     }
 
@@ -111,24 +100,31 @@ public class CreatingChoiceBox<T extends ModelObject<T>> extends HBox {
                 (observable, oldValue, newValue) -> button.setDisable(newValue == null));
     }
 
-    public CreatingChoiceBox(Collection<T> items, boolean allowSelectNull) {
-        this(items, null, null, allowSelectNull);
+    private void selectionChanged(ObservableValue<?> observableValue, Entry<T> oldValue, Entry<T> newValue) {
+        if (newValue == null) valueProperty.set(null);
+        else if (newValue.isPlaceholder()) {
+            assert newDialog != null;
+            final Optional<T> optionalItem = newDialog.get().showAndWait();
+            optionalItem.ifPresentOrElse(onNew, () -> choiceBox.getSelectionModel().select(oldValue));
+        } else {
+            valueProperty.set(newValue.get());
+        }
     }
 
-    public CreatingChoiceBox(Collection<T> items, Supplier<Dialog<T>> newDialog) {
-        this(items, newDialog, null, false);
+    public static <T extends ModelObject<T>> CreatingChoiceBox<T> simple(Collection<T> choices) {
+        return new CreatingChoiceBox<>(choices, null, null, null, false);
     }
 
-    public CreatingChoiceBox(Collection<T> items, Supplier<Dialog<T>> newDialog, boolean allowSelectNull) {
-        this(items, newDialog, null, allowSelectNull);
+    public static <T extends ModelObject<T>> CreatingChoiceBox<T> simple(Collection<T> choices, Supplier<Dialog<T>> newDialog, Function<T, Dialog<T>> editDialog) {
+        return new CreatingChoiceBox<>(choices, newDialog, null, editDialog, false);
     }
 
-    public CreatingChoiceBox(Collection<T> items, Supplier<Dialog<T>> newDialog, Function<T, Dialog<T>> editDialog) {
-        this(items, newDialog, editDialog, false);
+    public static <T extends ModelObject<T>> CreatingChoiceBox<T> nullable(Collection<T> choices, Supplier<Dialog<T>> newDialog, Function<T, Dialog<T>> editDialog) {
+        return new CreatingChoiceBox<>(choices, newDialog, null, editDialog, true);
     }
 
-    public ObservableList<T> getItems() {
-        return items;
+    public static <T extends ModelObject<T>> CreatingChoiceBox<T> creating(Collection<T> choices, Supplier<Dialog<T>> newDialog, Consumer<T> onNew) {
+        return new CreatingChoiceBox<>(choices, newDialog, onNew, null, false);
     }
 
     public ReadOnlyObjectProperty<T> valueProperty() {
@@ -139,12 +135,8 @@ public class CreatingChoiceBox<T extends ModelObject<T>> extends HBox {
         return valueProperty.get();
     }
 
-    public void setValue(T value) {
-        if (value == null) choiceBox.getSelectionModel().select(null);
-        else {
-            if (!items.contains(value)) items.add(value);
-            choiceBox.getSelectionModel().select(Entry.of(value));
-        }
+    public ObservableList<T> getChoices() {
+        return choices;
     }
 
     public static final class Entry<T extends ModelObject<T>> implements Comparable<Entry<T>> {

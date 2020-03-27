@@ -4,7 +4,6 @@ import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
@@ -40,32 +39,27 @@ public class AssociationFlowPane<A extends ModelObject<A>, B extends ModelObject
         this.newDialog = newDialog;
         this.editDialog = editDialog;
 
-        bChoiceBox = new CreatingChoiceBox<>(choices, newDialog);
-        getChildren().add(bChoiceBox);
+        bChoiceBox = CreatingChoiceBox.creating(choices, newDialog, this::addAssociation);
         bChoiceBox.valueProperty().addListener(this::onChoiceBoxChanged);
+        getChildren().add(bChoiceBox);
 
         items.addListener(this::onListChanged);
         pendingItems.addListener(this::onPendingListChanged);
         if (first != null) items.addAll(factory.getAll(first));
     }
 
-    public Collection<T> associateAll(A first) {
-        if (this.first != null) throw new IllegalStateException();
-        List<T> list = new LinkedList<>();
-        pendingItems.forEach(pending -> Optional.ofNullable(factory.create(first, pending.with)).ifPresent(list::add));
-        pendingItems.clear();
-        return list;
-    }
-
-    private void onChoiceBoxChanged(Observable observable) {
-        if (bChoiceBox.getValue() == null) return;
-        final B second = bChoiceBox.getValue();
+    private void addAssociation(B second) {
         bChoiceBox.setValue(null);
         if (first == null) pendingItems.add(new PendingAssociation<>(second));
         else {
             final T association = factory.create(first, second);
             if (association != null) items.add(association);
         }
+    }
+
+    private void onChoiceBoxChanged(Observable observable) {
+        if (bChoiceBox.getValue() == null) return;
+        addAssociation(bChoiceBox.getValue());
     }
 
     private void onListChanged(ListChangeListener.Change<? extends T> c) {
@@ -75,18 +69,11 @@ public class AssociationFlowPane<A extends ModelObject<A>, B extends ModelObject
             } else if (c.wasUpdated()) {
                 ErrorAlert.show(new UnsupportedOperationException("entries list must not be updated"));
             } else {
-                for (T added : c.getAddedSubList()) {
-                    bChoiceBox.getItems().remove(added.getSecond());
-                    getChildren().add(getChildren().size() - 1, new AssociationItem<>(
-                            added.getSecond(), editDialog, b -> {
+                for (T added : c.getAddedSubList())
+                    addAssociationItem(added.getSecond(), b -> {
                         if (factory.delete(added)) items.remove(added);
-
-                    }));
-                }
-                for (T removed : c.getRemoved()) {
-                    bChoiceBox.getItems().add(removed.getSecond());
-                    getChildren().remove(new AssociationItem<>(removed.getSecond(), null, null));
-                }
+                    });
+                for (T removed : c.getRemoved()) removeAssociationItem(removed.getSecond());
             }
         }
     }
@@ -98,17 +85,29 @@ public class AssociationFlowPane<A extends ModelObject<A>, B extends ModelObject
             } else if (c.wasUpdated()) {
                 ErrorAlert.show(new UnsupportedOperationException("entries list must not be updated"));
             } else {
-                for (PendingAssociation<A, B> added : c.getAddedSubList()) {
-                    bChoiceBox.getItems().remove(added.with);
-                    getChildren().add(getChildren().size() - 1, new AssociationItem<>(
-                            added.with, editDialog, b -> pendingItems.remove(added)));
-                }
-                for (PendingAssociation<A, B> removed : c.getRemoved()) {
-                    bChoiceBox.getItems().add(removed.with);
-                    getChildren().remove(new AssociationItem<>(removed.with, null, null));
-                }
+                for (PendingAssociation<A, B> added : c.getAddedSubList())
+                    addAssociationItem(added.with, b -> pendingItems.remove(added));
+                for (PendingAssociation<A, B> removed : c.getRemoved()) removeAssociationItem(removed.with);
             }
         }
+    }
+
+    private void addAssociationItem(final B second, final Consumer<B> onRemove) {
+        bChoiceBox.getChoices().remove(second);
+        getChildren().add(getChildren().size() - 1, new AssociationItem<>(second, editDialog, onRemove));
+    }
+
+    private void removeAssociationItem(final B second) {
+        bChoiceBox.getChoices().add(second);
+        getChildren().remove(new AssociationItem<>(second, null, null));
+    }
+
+    public Collection<T> associateAll(A first) {
+        if (this.first != null) throw new IllegalStateException();
+        List<T> list = new LinkedList<>();
+        pendingItems.forEach(pending -> Optional.ofNullable(factory.create(first, pending.with)).ifPresent(list::add));
+        pendingItems.clear();
+        return list;
     }
 
     private static final class PendingAssociation<A extends ModelObject<A>, B extends ModelObject<B>> {
@@ -139,7 +138,8 @@ public class AssociationFlowPane<A extends ModelObject<A>, B extends ModelObject
         private AssociationItem(T item, Function<T, Dialog<T>> editDialog, Consumer<T> onRemove) {
             super();
             this.item = item;
-            Button editButton = new Button(item.getDisplayName());
+            Button editButton = new Button();
+            editButton.textProperty().bind(item.displayNameProperty());
             editButton.setOnAction(event -> editDialog.apply(item).show());
             Button removeButton = new Button("X");
             removeButton.setOnAction(event -> onRemove.accept(item));

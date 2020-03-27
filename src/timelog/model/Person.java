@@ -2,6 +2,7 @@ package timelog.model;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableStringValue;
 import timelog.model.db.ModelFactory;
 import timelog.model.db.ModelObject;
 import timelog.model.db.ModelTableDefinition;
@@ -41,12 +42,12 @@ public final class Person extends ModelObject<Person> {
 
     @Override
     public int compareTo(Person o) {
-        return getDisplayName().compareTo(getDisplayName());
+        return getDisplayName().compareTo(o.getDisplayName());
     }
 
     @Override
-    public String getDisplayName() {
-        return name.get();
+    public ObservableStringValue displayNameProperty() {
+        return name;
     }
 
     public static final class PersonFactory extends ModelFactory<Person> {

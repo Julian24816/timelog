@@ -4,6 +4,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableStringValue;
 import timelog.model.db.ModelFactory;
 import timelog.model.db.ModelObject;
 import timelog.model.db.ModelTableDefinition;
@@ -48,7 +49,6 @@ public final class LogEntry extends ModelObject<LogEntry> {
         activity.setValue(value);
     }
 
-
     public StringProperty whatProperty() {
         return what;
     }
@@ -61,7 +61,6 @@ public final class LogEntry extends ModelObject<LogEntry> {
         what.setValue(value);
     }
 
-
     public ObjectProperty<LocalDateTime> startProperty() {
         return start;
     }
@@ -73,7 +72,6 @@ public final class LogEntry extends ModelObject<LogEntry> {
     public void setStart(LocalDateTime value) {
         start.setValue(value);
     }
-
 
     public ObjectProperty<LocalDateTime> endProperty() {
         return end;
@@ -89,6 +87,11 @@ public final class LogEntry extends ModelObject<LogEntry> {
 
     public void setMeansOfTransport(MeansOfTransport value) {
         meansOfTransport.setValue(value);
+    }
+
+    @Override
+    public ObservableStringValue displayNameProperty() {
+        throw new UnsupportedOperationException();
     }
 
     @Override

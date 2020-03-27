@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS activity
     parent integer default 0 not null
         references activity
             on update cascade on delete set default,
-    name   text    not null
+    name   text    not null,
+    color  text    default '#DDDDDDFF' not null
 );
 
 CREATE TABLE IF NOT EXISTS meansOfTransport

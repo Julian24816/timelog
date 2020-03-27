@@ -3,6 +3,8 @@ package timelog.view;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -12,6 +14,7 @@ import javafx.scene.text.Text;
 import timelog.model.LogEntry;
 import timelog.model.MeansOfTransport;
 import timelog.view.customFX.TimeTextField;
+import timelog.view.edit.LogEntryDialog;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -27,7 +30,7 @@ public class CurrentEntryDisplay extends VBox {
     private final Text activityName = new Text("No Current Activity");
     private final Text duration = new Text("--:--");
     private final Text activityWhat = new Text("");
-    private final ObjectProperty<LogEntry> activity = new SimpleObjectProperty<>(this, "current activity") {
+    private final ObjectProperty<LogEntry> entry = new SimpleObjectProperty<>(this, "current activity") {
         @Override
         protected void invalidated() {
             if (getValue() == null) {
@@ -39,7 +42,7 @@ public class CurrentEntryDisplay extends VBox {
             } else {
                 startTime.setText(TimeTextField.TIME_FORMATTER.format(getValue().getStart().toLocalTime()));
                 transport.setText(Optional.ofNullable(getValue().getMeansOfTransport()).map(MeansOfTransport::getDisplayName).orElse(""));
-                activityName.setText(getValue().getActivity().getName());
+                activityName.setText(getValue().getActivity().getFullName());
                 timer.scheduleAtFixedRate(new TimerTask() {
                     @Override
                     public void run() {
@@ -59,10 +62,13 @@ public class CurrentEntryDisplay extends VBox {
         }
     };
 
-    public CurrentEntryDisplay(LogEntry activity) {
-        this.activity.setValue(activity);
+    private final LogEntryList logEntryList;
 
-        final Font font = new Font(20);
+    public CurrentEntryDisplay(LogEntry entry, LogEntryList logEntryList) {
+        this.logEntryList = logEntryList;
+        this.entry.setValue(entry);
+
+        final Font font = new Font(16);
         activityName.setFont(font);
         duration.setFont(font);
 
@@ -78,8 +84,6 @@ public class CurrentEntryDisplay extends VBox {
         Region spacer = new Region();
         spacer.setPrefWidth(30);
         HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        activityWhat.wrappingWidthProperty().bind(widthProperty().add(-10));
 
         final HBox titleLine = new HBox(title, startTimeLabel, startTime);
         if (!transport.getText().isEmpty()) {
@@ -97,17 +101,30 @@ public class CurrentEntryDisplay extends VBox {
         getChildren().add(titleLine);
         getChildren().add(new HBox(activityName, spacer, duration));
         getChildren().add(activityWhat);
+
+        setOnMouseClicked(this::doubleClick);
     }
 
-    public ObjectProperty<LogEntry> activityProperty() {
-        return activity;
+    private void doubleClick(MouseEvent mouseEvent) {
+        if (mouseEvent.getClickCount() != 2 || !mouseEvent.getButton().equals(MouseButton.PRIMARY)) return;
+        new LogEntryDialog(entry.get()).showAndWait().ifPresent(logEntry -> {
+            if (logEntry.getEnd() == null) entry.setValue(logEntry);
+            else {
+                entry.setValue(null);
+                logEntryList.getEntries().add(logEntry);
+            }
+        });
     }
 
-    public LogEntry getActivity() {
-        return activity.getValue();
+    public ObjectProperty<LogEntry> entryProperty() {
+        return entry;
     }
 
-    public void setActivity(LogEntry value) {
-        activity.setValue(value);
+    public LogEntry getEntry() {
+        return entry.getValue();
+    }
+
+    public void setEntry(LogEntry value) {
+        entry.setValue(value);
     }
 }
