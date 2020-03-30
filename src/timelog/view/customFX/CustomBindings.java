@@ -4,7 +4,6 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableObjectValue;
 import javafx.beans.value.ObservableValue;
 
 import java.util.Optional;
@@ -14,7 +13,7 @@ public final class CustomBindings {
     private CustomBindings() {
     }
 
-    public static <P, R> ObjectBinding<R> ifNull(ObservableObjectValue<P> observable,
+    public static <P, R> ObjectBinding<R> ifNull(ObservableValue<P> observable,
                                                  Function<P, R> select, R ifNull) {
         return new ObjectBinding<>() {
             {
@@ -23,7 +22,7 @@ public final class CustomBindings {
 
             @Override
             protected R computeValue() {
-                return observable.get() == null ? ifNull : select.apply(observable.get());
+                return observable.getValue() == null ? ifNull : select.apply(observable.getValue());
             }
         };
     }

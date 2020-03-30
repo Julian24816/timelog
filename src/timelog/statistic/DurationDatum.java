@@ -4,7 +4,7 @@ import timelog.model.LogEntry;
 
 import java.time.Duration;
 
-public class DurationDatum implements StatisticalDatum<Duration> {
+public final class DurationDatum implements StatisticalDatum<Duration> {
     private final Duration duration;
 
     public DurationDatum() {

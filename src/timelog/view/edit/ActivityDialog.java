@@ -1,6 +1,5 @@
 package timelog.view.edit;
 
-import javafx.beans.Observable;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
@@ -9,7 +8,7 @@ import timelog.view.customFX.CreatingChoiceBox;
 
 import java.util.Collection;
 
-class ActivityDialog extends ObjectDialog<Activity> {
+public final class ActivityDialog extends ObjectDialog<Activity> {
     private final CreatingChoiceBox<Activity> parent;
     private final TextField name;
     private final ColorPicker color;
@@ -19,30 +18,28 @@ class ActivityDialog extends ObjectDialog<Activity> {
     }
 
     public ActivityDialog(Activity editedObject) {
-        super("Activity", editedObject, true);
+        super("Activity", editedObject);
 
         final Collection<Activity> all = Activity.FACTORY.getAll();
         if (editedObject != null) all.remove(editedObject);
         parent = gridPane2C.addRow("Parent", CreatingChoiceBox.simple(all));
         parent.setValue(Activity.FACTORY.getForId(0));
-        parent.valueProperty().addListener(this::invalidated);
 
         name = gridPane2C.addRow("Name", new TextField());
         name.setPromptText("enter name");
-        name.textProperty().addListener(this::invalidated);
-        name.requestFocus();
 
         color = gridPane2C.addRow("Color", new ColorPicker(Color.valueOf(Activity.DEFAULT_COLOR)));
+
+        addOKRequirement(parent.valueProperty().isNotNull());
+        addOKRequirement(name.textProperty().isNotEmpty());
+
+        name.requestFocus();
 
         if (editedObject != null) {
             parent.setValue(editedObject.getParent());
             name.setText(editedObject.getName());
             color.setValue(Color.valueOf(editedObject.getColor()));
         }
-    }
-
-    private void invalidated(Observable observable) {
-        okButton.setDisable(parent.getValue() == null || name.getText().isEmpty());
     }
 
     @Override

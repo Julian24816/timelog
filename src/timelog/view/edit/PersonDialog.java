@@ -1,8 +1,6 @@
 package timelog.view.edit;
 
-import javafx.beans.Observable;
 import javafx.scene.control.TextField;
-import timelog.model.MeansOfTransport;
 import timelog.model.Person;
 
 class PersonDialog extends ObjectDialog<Person> {
@@ -13,20 +11,16 @@ class PersonDialog extends ObjectDialog<Person> {
     }
 
     public PersonDialog(Person editedObject) {
-        super("Activity", editedObject, true);
+        super("Activity", editedObject);
 
         name = gridPane2C.addRow("Name", new TextField());
         name.setPromptText("enter name");
-        name.textProperty().addListener(this::invalidated);
+        addOKRequirement(name.textProperty().isNotEmpty());
         name.requestFocus();
 
         if (editedObject != null) {
             name.setText(editedObject.getName());
         }
-    }
-
-    private void invalidated(Observable observable) {
-        okButton.setDisable(name.getText().isEmpty());
     }
 
     @Override

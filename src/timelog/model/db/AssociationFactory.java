@@ -4,7 +4,7 @@ import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.function.BiFunction;
 
-public class AssociationFactory<A extends ModelObject<A>, B extends ModelObject<B>, T extends Association<A, B>> extends Factory<T> {
+public abstract class AssociationFactory<A extends ModelObject<A>, B extends ModelObject<B>, T extends Association<A, B>> extends Factory<T> {
     private final AssociationTableDefinition<A, B, T> definition;
     private final BiFunction<A, B, T> constructor;
 

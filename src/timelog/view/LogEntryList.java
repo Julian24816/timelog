@@ -19,12 +19,15 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.VLineTo;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import timelog.model.Activity;
 import timelog.model.LogEntry;
+import timelog.model.MeansOfTransport;
 import timelog.view.customFX.CustomBindings;
 import timelog.view.customFX.ErrorAlert;
+import timelog.view.customFX.JoiningTextFlow;
 import timelog.view.customFX.TimeText;
 import timelog.view.edit.LogEntryDialog;
 
@@ -78,7 +81,7 @@ public class LogEntryList extends ScrollPane {
     }
 
     private static final class ActivityLine extends HBox {
-        private static final double TIME_TEXT_WIDTH = 25, TIME_TEXT_HEIGHT_x2 = 32, DETAILS_VISIBLE_HEIGHT = 16;
+        private static final double TIME_TEXT_WIDTH = 30, TIME_TEXT_HEIGHT_x2 = 32, DETAILS_VISIBLE_HEIGHT = 22;
         private final LogEntry entry;
         private BooleanBinding detailsVisibility;
 
@@ -93,15 +96,24 @@ public class LogEntryList extends ScrollPane {
         }
 
         private void createLayout(LogEntry entry) {
-            final VBox time = getTimeVBox(entry);
+            final VBox time = entry.getActivity().getId() == 3 ? getSleepTimeVBox(entry) : getTimeVBox(entry); //TODO enable configuration
             final TextFlow details = getDetails(entry);
             detailsVisibility = time.heightProperty().greaterThanOrEqualTo(DETAILS_VISIBLE_HEIGHT);
-            detailsVisibility.addListener((observable, old, newValue) -> {
+            detailsVisibility.addListener(observable -> {
                 getChildren().remove(details);
                 if (detailsVisibility.get()) getChildren().add(details);
             });
             getChildren().add(time);
-            if (detailsVisibility.get()) getChildren().add(details);
+        }
+
+        private VBox getSleepTimeVBox(LogEntry entry) {
+            final Path line = new Path(new MoveTo(0, 0), new VLineTo(10));
+            final TimeText end = new TimeText();
+            end.valueProperty().bind(entry.endProperty());
+            final VBox vBox = new VBox(line, end);
+            vBox.setAlignment(Pos.CENTER);
+            vBox.setPrefWidth(TIME_TEXT_WIDTH);
+            return vBox;
         }
 
         private VBox getTimeVBox(LogEntry entry) {
@@ -116,11 +128,9 @@ public class LogEntryList extends ScrollPane {
             time.setPrefWidth(TIME_TEXT_WIDTH);
 
             InvalidationListener invalidated = observable -> {
-                long lineHeight = 0;
-                if (entry.getEnd() != null) {
-                    final long size = this.entry.getStart().until(this.entry.getEnd(), ChronoUnit.MINUTES);
-                    lineHeight = Math.min(240, size) / 2;
-                }
+                if (entry.getEnd() == null) return;
+                final long minutes = this.entry.getStart().until(this.entry.getEnd(), ChronoUnit.MINUTES);
+                final long lineHeight = minutes / 2;
                 time.getChildren().removeAll(start, end);
                 if (lineHeight > TIME_TEXT_HEIGHT_x2) {
                     time.getChildren().add(0, start);
@@ -135,10 +145,10 @@ public class LogEntryList extends ScrollPane {
             return time;
         }
 
-        private TextFlow getDetails(LogEntry entry) {
-            final Label activityName = new Label();
+        private JoiningTextFlow getDetails(LogEntry entry) {
+            final Text activityName = new Text();
             activityName.textProperty().bind(CustomBindings.select(entry.activityProperty(), Activity::nameProperty));
-            //activityName.setFont(new Font(16));
+            activityName.setFont(new Font(16));
 
             final Label what = new Label();
             what.textProperty().bind(entry.whatProperty());
@@ -147,7 +157,7 @@ public class LogEntryList extends ScrollPane {
             transport.textProperty().bind(CustomBindings.ifNull(entry.meansOfTransportProperty(),
                     p -> ", " + p.getDisplayName(), ""));
 
-            return new TextFlow(activityName, what, transport);
+            return new JoiningTextFlow(activityName, entry.whatProperty(), CustomBindings.select(entry.meansOfTransportProperty(), MeansOfTransport::nameProperty));
         }
 
         private void onMouseClicked(MouseEvent mouseEvent) {

@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.function.Consumer;
 
-public class StatisticalData<D> implements Consumer<StatisticalDatum<D>> {
+public final class StatisticalData<D> implements Consumer<StatisticalDatum<D>> {
     private final Collection<Consumer<StatisticalDatum<D>>> addListeners = new HashSet<>();
     private StatisticalDatum<D> value;
 

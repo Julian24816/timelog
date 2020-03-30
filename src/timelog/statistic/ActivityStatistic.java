@@ -6,7 +6,7 @@ import timelog.model.LogEntry;
 import java.time.Duration;
 import java.util.Collection;
 
-public class ActivityStatistic extends Statistic<Activity, Duration> {
+public final class ActivityStatistic extends Statistic<Activity, Duration> {
     private ActivityStatistic(Activity root) {
         super(root, root.getId() == 0 ? "Activity" : root.getName(), DurationDatum::new);
     }

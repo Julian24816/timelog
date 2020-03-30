@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Factory<T extends DatabaseObject> {
+public abstract class Factory<T extends DatabaseObject> {
     protected final SQLFunction<ResultView, T> resultConverter;
     private final TableDefinition<T> definition;
 

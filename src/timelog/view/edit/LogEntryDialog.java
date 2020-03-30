@@ -1,6 +1,5 @@
 package timelog.view.edit;
 
-import javafx.beans.Observable;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
 import timelog.model.*;
@@ -11,7 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-public class LogEntryDialog extends ObjectDialog<LogEntry> {
+public final class LogEntryDialog extends ObjectDialog<LogEntry> {
     private final CreatingChoiceBox<Activity> activity;
     private final TextField what;
     private final CreatingChoiceBox<MeansOfTransport> meansOfTransport;
@@ -26,31 +25,26 @@ public class LogEntryDialog extends ObjectDialog<LogEntry> {
     }
 
     public LogEntryDialog(LogEntry editedObject) {
-        super("Log Entry", editedObject, true);
+        super("Log Entry", editedObject);
 
         activity = gridPane2C.addRow("Type", CreatingChoiceBox.simple(
                 Activity.FACTORY.getAll(), ActivityDialog::new, ActivityDialog::new));
         activity.setValue(Activity.FACTORY.getForId(0));
-        activity.valueProperty().addListener(this::invalidated);
-
         meansOfTransport = gridPane2C.addRow("Transport", CreatingChoiceBox.nullable(
                 MeansOfTransport.FACTORY.getAll(), MeansOfTransportDialog::new, MeansOfTransportDialog::new));
-
         people = gridPane2C.addRow("People", new AssociationFlowPane<>(
                 QualityTime.FACTORY, editedObject, Person.FACTORY.getAll(), PersonDialog::new, PersonDialog::new));
-
         what = gridPane2C.addRow("Details", new TextField());
-
         gridPane2C.addSeparator();
 
         startDate = gridPane2C.addRow("Start", new DatePicker(LocalDate.now()));
-        startDate.valueProperty().addListener(this::invalidated);
-
         startTime = gridPane2C.addRow("", new TimeTextField(LocalTime.now()));
-        startTime.valueProperty().addListener(this::invalidated);
-
         endDate = gridPane2C.addRow("End", new DatePicker(LocalDate.now()));
         endTime = gridPane2C.addRow("", new TimeTextField(null));
+
+        addOKRequirement(activity.valueProperty().isNotNull());
+        addOKRequirement(startDate.valueProperty().isNotNull());
+        addOKRequirement(startTime.valueProperty().isNotNull());
 
         if (editedObject != null) {
             activity.setValue(editedObject.getActivity());
@@ -65,21 +59,13 @@ public class LogEntryDialog extends ObjectDialog<LogEntry> {
         }
     }
 
-    private void invalidated(Observable observable) {
-        okButton.setDisable(activity.getValue() == null
-                || startTime.getValue() == null
-                || startDate.getValue() == null
-                || endDate.getValue() == null
-        );
-    }
-
     @Override
     protected LogEntry createNew() {
         final LogEntry logEntry = LogEntry.FACTORY.createNew(
                 activity.getValue(),
                 what.getText(),
                 LocalDateTime.of(startDate.getValue(), startTime.getValue()),
-                endTime.getValue() == null ? null : LocalDateTime.of(endDate.getValue(), endTime.getValue()),
+                endTime.getValue() == null || endDate.getValue() == null ? null : LocalDateTime.of(endDate.getValue(), endTime.getValue()),
                 meansOfTransport.getValue()
         );
         people.associateAll(logEntry);

@@ -7,7 +7,7 @@ import timelog.model.QualityTime;
 import java.time.Duration;
 import java.util.Collection;
 
-public class QualityTimeStatistic extends Statistic<Person, Duration> {
+public final class QualityTimeStatistic extends Statistic<Person, Duration> {
     private QualityTimeStatistic(Person person) {
         super(person, person == null ? "People" : person.getName(), DurationDatum::new);
     }

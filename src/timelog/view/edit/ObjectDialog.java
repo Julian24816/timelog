@@ -1,5 +1,9 @@
 package timelog.view.edit;
 
+import javafx.beans.Observable;
+import javafx.beans.binding.BooleanExpression;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
@@ -10,11 +14,12 @@ import timelog.view.customFX.GridPane2C;
 abstract class ObjectDialog<T extends ModelObject<T>> extends Dialog<T> {
 
     protected final T editedObject;
-
     protected final GridPane2C gridPane2C;
-    protected final Button okButton;
 
-    ObjectDialog(String name, T editedObject, boolean okDisabled) {
+    private final Button okButton;
+    private BooleanExpression okButtonDisabled;
+
+    ObjectDialog(String name, T editedObject) {
         super();
         this.editedObject = editedObject;
         setTitle(name);
@@ -28,8 +33,18 @@ abstract class ObjectDialog<T extends ModelObject<T>> extends Dialog<T> {
 
         getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         okButton = (Button) getDialogPane().lookupButton(ButtonType.OK);
-        okButton.setDisable(editedObject == null && okDisabled);
+        okButtonDisabled = BooleanExpression.booleanExpression(new SimpleBooleanProperty(false));
         setResultConverter(this::convertResult);
+    }
+
+    void addOKRequirement(ObservableBooleanValue value) {
+        okButtonDisabled.removeListener(this::onDisableInvalidated);
+        okButtonDisabled = okButtonDisabled.or(BooleanExpression.booleanExpression(value).not());
+        okButtonDisabled.addListener(this::onDisableInvalidated);
+    }
+
+    private void onDisableInvalidated(Observable observable) {
+        okButton.setDisable(okButtonDisabled.getValue());
     }
 
     private T convertResult(ButtonType buttonType) {

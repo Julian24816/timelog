@@ -3,7 +3,7 @@ package timelog.model.db;
 import java.sql.ResultSet;
 import java.util.Collection;
 
-public class ModelFactory<T extends ModelObject<T>> extends Factory<T> {
+public abstract class ModelFactory<T extends ModelObject<T>> extends Factory<T> {
 
     private final ModelTableDefinition<T> modelTableDefinition;
 
