@@ -7,7 +7,6 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -19,7 +18,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.VLineTo;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import timelog.model.Activity;
@@ -81,7 +79,8 @@ public class LogEntryList extends ScrollPane {
     }
 
     private static final class ActivityLine extends HBox {
-        private static final double TIME_TEXT_WIDTH = 30, TIME_TEXT_HEIGHT_x2 = 32, DETAILS_VISIBLE_HEIGHT = 22;
+        private static final double TIME_TEXT_WIDTH = 30, TIME_TEXT_HEIGHT_x2 = 32,
+                DETAILS_VISIBLE_HEIGHT = 22, SLEEP_LINE_HEIGHT = 10;
         private final LogEntry entry;
         private BooleanBinding detailsVisibility;
 
@@ -96,7 +95,7 @@ public class LogEntryList extends ScrollPane {
         }
 
         private void createLayout(LogEntry entry) {
-            final VBox time = entry.getActivity().getId() == 3 ? getSleepTimeVBox(entry) : getTimeVBox(entry); //TODO enable configuration
+            final VBox time = getTimeVBox(entry, entry.getActivity().getId() == 3 ? SLEEP_LINE_HEIGHT : -1);
             final TextFlow details = getDetails(entry);
             detailsVisibility = time.heightProperty().greaterThanOrEqualTo(DETAILS_VISIBLE_HEIGHT);
             detailsVisibility.addListener(observable -> {
@@ -106,58 +105,42 @@ public class LogEntryList extends ScrollPane {
             getChildren().add(time);
         }
 
-        private VBox getSleepTimeVBox(LogEntry entry) {
-            final Path line = new Path(new MoveTo(0, 0), new VLineTo(10));
-            final TimeText end = new TimeText();
-            end.valueProperty().bind(entry.endProperty());
-            final VBox vBox = new VBox(line, end);
-            vBox.setAlignment(Pos.CENTER);
-            vBox.setPrefWidth(TIME_TEXT_WIDTH);
-            return vBox;
-        }
-
-        private VBox getTimeVBox(LogEntry entry) {
+        private VBox getTimeVBox(LogEntry entry, double fixedLineHeight) {
             final TimeText start = new TimeText();
             start.valueProperty().bind(entry.startProperty());
             final TimeText end = new TimeText();
             end.valueProperty().bind(entry.endProperty());
-            final VLineTo vLineTo = new VLineTo(1);
+            final VLineTo vLineTo = new VLineTo(fixedLineHeight);
             final Path line = new Path(new MoveTo(0, 0), vLineTo);
-            final VBox time = new VBox(line);
+            final VBox time = new VBox(start, line, end);
             time.setAlignment(Pos.CENTER);
             time.setPrefWidth(TIME_TEXT_WIDTH);
 
-            InvalidationListener invalidated = observable -> {
-                if (entry.getEnd() == null) return;
-                final long minutes = this.entry.getStart().until(this.entry.getEnd(), ChronoUnit.MINUTES);
-                final long lineHeight = minutes / 2;
-                time.getChildren().removeAll(start, end);
-                if (lineHeight > TIME_TEXT_HEIGHT_x2) {
-                    time.getChildren().add(0, start);
-                    time.getChildren().add(end);
-                    vLineTo.setY(lineHeight - TIME_TEXT_HEIGHT_x2);
-                } else vLineTo.setY(lineHeight);
-            };
-            entry.startProperty().addListener(invalidated);
-            entry.endProperty().addListener(invalidated);
-            invalidated.invalidated(null);
-
+            if (fixedLineHeight < 0) {
+                InvalidationListener invalidated = observable -> {
+                    if (entry.getEnd() == null) return;
+                    final long minutes = this.entry.getStart().until(this.entry.getEnd(), ChronoUnit.MINUTES);
+                    final long lineHeight = minutes / 2;
+                    time.getChildren().removeAll(start, end);
+                    if (lineHeight > TIME_TEXT_HEIGHT_x2) {
+                        time.getChildren().add(0, start);
+                        time.getChildren().add(end);
+                        vLineTo.setY(lineHeight - TIME_TEXT_HEIGHT_x2);
+                    } else vLineTo.setY(lineHeight);
+                };
+                entry.startProperty().addListener(invalidated);
+                entry.endProperty().addListener(invalidated);
+                invalidated.invalidated(null);
+            }
             return time;
         }
 
         private JoiningTextFlow getDetails(LogEntry entry) {
             final Text activityName = new Text();
             activityName.textProperty().bind(CustomBindings.select(entry.activityProperty(), Activity::nameProperty));
-            activityName.setFont(new Font(16));
-
-            final Label what = new Label();
-            what.textProperty().bind(entry.whatProperty());
-
-            final Label transport = new Label();
-            transport.textProperty().bind(CustomBindings.ifNull(entry.meansOfTransportProperty(),
-                    p -> ", " + p.getDisplayName(), ""));
-
-            return new JoiningTextFlow(activityName, entry.whatProperty(), CustomBindings.select(entry.meansOfTransportProperty(), MeansOfTransport::nameProperty));
+            return new JoiningTextFlow(activityName,
+                    entry.whatProperty(),
+                    CustomBindings.select(entry.meansOfTransportProperty(), MeansOfTransport::nameProperty));
         }
 
         private void onMouseClicked(MouseEvent mouseEvent) {

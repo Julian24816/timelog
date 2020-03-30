@@ -20,6 +20,7 @@ public abstract class Statistic<T, D> implements Comparable<Statistic<T, D>> {
     }
 
     protected void add(T key, StatisticalDatum<D> value) {
+        System.out.printf("\n%s, %s\n", key, value);
         if (this.key == null || !this.key.equals(key)) getSubStatistic(key).add(key, value);
         else data.accept(value);
     }

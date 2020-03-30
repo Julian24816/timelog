@@ -98,7 +98,8 @@ public final class LogEntry extends ModelObject<LogEntry> {
     public String toString() {
         String result = "LogEntry{" +
                 "id=" + getId() +
-                ", activity=" + what.get() +
+                ", activity=" + activity.get() +
+                ", details=" + what.get() +
                 ", start=" + FORMATTER.format(start.get());
         if (end.get() == null) result += ", end=null";
         else result += ", end=" + FORMATTER.format(end.get());

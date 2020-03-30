@@ -23,14 +23,16 @@ public final class DurationDatum implements StatisticalDatum<Duration> {
     @Override
     public String toString() {
         if (duration.equals(Duration.ZERO)) return "";
-        int minutes = Math.round(duration.getSeconds() / 60f) % 60;
-        int hours = Math.round(duration.getSeconds() / 3600f);
+        final long minutes = Math.floorDiv(duration.getSeconds(), 60) % 60;
+        final long hours = Math.floorDiv(duration.getSeconds(), 3600);
         return String.format("%dh %02dm", hours, minutes);
     }
 
     @Override
     public StatisticalDatum<Duration> plus(StatisticalDatum<Duration> value) {
-        return new DurationDatum(duration.plus(value.get()));
+        final DurationDatum result = new DurationDatum(duration.plus(value.get()));
+        System.out.printf("%s + %s = %s\n", this, value, result);
+        return result;
     }
 
     @Override
