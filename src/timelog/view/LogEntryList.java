@@ -1,5 +1,6 @@
 package timelog.view;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -77,13 +78,13 @@ public class LogEntryList extends ScrollPane {
     }
 
     private static final class ActivityLine extends HBox {
-        public static final int EDGE_TIME_HEIGHTS = 30;
+        private static final double TIME_TEXT_WIDTH = 25, TIME_TEXT_HEIGHT_x2 = 32;
         private final LogEntry entry;
 
         private ActivityLine(LogEntry entry) {
             super(10);
             this.entry = entry;
-            getChildren().addAll(getTimeVBox(entry), getDetailsVBox(entry));
+            getChildren().addAll(getTimeVBox(entry), getDetails(entry));
             setOnMouseClicked(this::onMouseClicked);
             backgroundProperty().bind(CustomBindings.apply(
                     CustomBindings.select(entry.activityProperty(), Activity::colorProperty),
@@ -93,21 +94,35 @@ public class LogEntryList extends ScrollPane {
         private VBox getTimeVBox(LogEntry entry) {
             final TimeText start = new TimeText();
             start.valueProperty().bind(entry.startProperty());
-
-            final VLineTo vLineTo = new VLineTo(getLineHeight());
-            final Path line = new Path(new MoveTo(0, 0), vLineTo);
-            entry.startProperty().addListener(observable -> vLineTo.setY(getLineHeight()));
-            entry.endProperty().addListener(observable -> vLineTo.setY(getLineHeight()));
-
             final TimeText end = new TimeText();
             end.valueProperty().bind(entry.endProperty());
-
-            final VBox time = new VBox(start, line, end);
+            final VLineTo vLineTo = new VLineTo(1);
+            final Path line = new Path(new MoveTo(0, 0), vLineTo);
+            final VBox time = new VBox(line);
             time.setAlignment(Pos.CENTER);
+            time.setPrefWidth(TIME_TEXT_WIDTH);
+
+            InvalidationListener invalidated = observable -> {
+                long lineHeight = 0;
+                if (entry.getEnd() != null) {
+                    final long size = this.entry.getStart().until(this.entry.getEnd(), ChronoUnit.MINUTES);
+                    lineHeight = Math.min(240, size) / 2;
+                }
+                time.getChildren().removeAll(start, end);
+                if (lineHeight > TIME_TEXT_HEIGHT_x2) {
+                    time.getChildren().add(0, start);
+                    time.getChildren().add(end);
+                    vLineTo.setY(lineHeight - TIME_TEXT_HEIGHT_x2);
+                } else vLineTo.setY(lineHeight);
+            };
+            entry.startProperty().addListener(invalidated);
+            entry.endProperty().addListener(invalidated);
+            invalidated.invalidated(null);
+
             return time;
         }
 
-        private VBox getDetailsVBox(LogEntry entry) {
+        private TextFlow getDetails(LogEntry entry) {
             final Text activityName = new Text();
             activityName.textProperty().bind(Bindings.select(entry, "activity", "name"));
             activityName.setFont(new Font(16));
@@ -119,18 +134,12 @@ public class LogEntryList extends ScrollPane {
             transport.textProperty().bind(CustomBindings.ifNull(entry.meansOfTransportProperty(),
                     p -> ", " + p.getDisplayName(), ""));
 
-            return new VBox(activityName, new TextFlow(what, transport));
+            return new TextFlow(activityName, what, transport);
         }
 
         private void onMouseClicked(MouseEvent mouseEvent) {
             if (mouseEvent.getClickCount() != 2 || !mouseEvent.getButton().equals(MouseButton.PRIMARY)) return;
             new LogEntryDialog(entry).show();
-        }
-
-        private long getLineHeight() {
-            if (entry.getEnd() == null) return 0;
-            final long size = entry.getStart().until(entry.getEnd(), ChronoUnit.MINUTES);
-            return Math.max(EDGE_TIME_HEIGHTS + 2, Math.min(240, size) / 2) - EDGE_TIME_HEIGHTS;
         }
 
         @Override
