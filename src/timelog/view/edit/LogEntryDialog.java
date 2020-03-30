@@ -33,15 +33,13 @@ public class LogEntryDialog extends ObjectDialog<LogEntry> {
         activity.setValue(Activity.FACTORY.getForId(0));
         activity.valueProperty().addListener(this::invalidated);
 
-        what = gridPane2C.addRow("What", new TextField());
-        what.textProperty().addListener(this::invalidated);
-        what.requestFocus();
-
         meansOfTransport = gridPane2C.addRow("Transport", CreatingChoiceBox.nullable(
                 MeansOfTransport.FACTORY.getAll(), MeansOfTransportDialog::new, MeansOfTransportDialog::new));
 
         people = gridPane2C.addRow("People", new AssociationFlowPane<>(
                 QualityTime.FACTORY, editedObject, Person.FACTORY.getAll(), PersonDialog::new, PersonDialog::new));
+
+        what = gridPane2C.addRow("Details", new TextField());
 
         gridPane2C.addSeparator();
 
@@ -69,7 +67,6 @@ public class LogEntryDialog extends ObjectDialog<LogEntry> {
 
     private void invalidated(Observable observable) {
         okButton.setDisable(activity.getValue() == null
-                || what.getText().isBlank()
                 || startTime.getValue() == null
                 || startDate.getValue() == null
                 || endDate.getValue() == null

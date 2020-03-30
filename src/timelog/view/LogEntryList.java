@@ -39,7 +39,7 @@ public class LogEntryList extends ScrollPane {
 
     public LogEntryList() {
         super();
-        VBox.setMargin(placeholder, new Insets(20, 20, 20, 20));
+        VBox.setMargin(placeholder, new Insets(20));
         vBox.getChildren().add(placeholder);
         setContent(vBox);
         setFitToWidth(true);

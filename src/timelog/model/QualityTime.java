@@ -1,6 +1,8 @@
 package timelog.model;
 
-import timelog.model.db.*;
+import timelog.model.db.Association;
+import timelog.model.db.AssociationFactory;
+import timelog.model.db.AssociationTableDefinition;
 
 public final class QualityTime extends Association<LogEntry, Person> {
     public static final QualityTimeFactory FACTORY = new QualityTimeFactory();
@@ -9,7 +11,7 @@ public final class QualityTime extends Association<LogEntry, Person> {
         super(logEntry, person);
     }
 
-    private static final class QualityTimeFactory extends AssociationFactory<LogEntry, Person, QualityTime> {
+    public static final class QualityTimeFactory extends AssociationFactory<LogEntry, Person, QualityTime> {
 
         private QualityTimeFactory() {
             super(QualityTime::new, LogEntry.FACTORY, Person.FACTORY,

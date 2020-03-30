@@ -148,10 +148,13 @@ public final class LogEntry extends ModelObject<LogEntry> {
         }
 
         public Collection<LogEntry> getAllFinishedOn(LocalDate date) {
+            return getAllFinishedBetween(date.atTime(0, 0), date.plus(1, ChronoUnit.DAYS).atTime(0, 0));
+        }
+
+        public Collection<LogEntry> getAllFinishedBetween(final LocalDateTime from, final LocalDateTime to) {
             return selectWhere(this::selectAll, "end >= ? AND end < ?", 2, (preparedStatement, param) -> {
-                if (param.equals(1)) preparedStatement.setTimestamp(param, Timestamp.valueOf(date.atTime(0, 0)));
-                if (param.equals(2))
-                    preparedStatement.setTimestamp(param, Timestamp.valueOf(date.plus(1, ChronoUnit.DAYS).atTime(0, 0)));
+                if (param.equals(1)) preparedStatement.setTimestamp(param, Timestamp.valueOf(from));
+                if (param.equals(2)) preparedStatement.setTimestamp(param, Timestamp.valueOf(to));
             });
         }
     }

@@ -2,19 +2,20 @@ package timelog.view;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.ActionEvent;
+import javafx.geometry.HPos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import timelog.model.LogEntry;
 import timelog.model.MeansOfTransport;
 import timelog.view.customFX.TimeTextField;
 import timelog.view.edit.LogEntryDialog;
+import timelog.view.single.EndTimeDialog;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -22,14 +23,18 @@ import java.time.LocalTime;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.function.Consumer;
 
-public class CurrentEntryDisplay extends VBox {
+public class CurrentEntryDisplay extends GridPane {
+
     private final Timer timer = new Timer(true);
     private final Text startTime = new Text("--:--");
     private final Text transport = new Text("");
     private final Text activityName = new Text("No Current Activity");
     private final Text duration = new Text("--:--");
     private final Text activityWhat = new Text("");
+    private final Button button = new Button("New");
+
     private final ObjectProperty<LogEntry> entry = new SimpleObjectProperty<>(this, "current activity") {
         @Override
         protected void invalidated() {
@@ -39,10 +44,11 @@ public class CurrentEntryDisplay extends VBox {
                 activityName.setText("No Current Activity");
                 duration.setText("--:--");
                 activityWhat.setText("");
+                button.setText("New");
             } else {
                 startTime.setText(TimeTextField.TIME_FORMATTER.format(getValue().getStart().toLocalTime()));
                 transport.setText(Optional.ofNullable(getValue().getMeansOfTransport()).map(MeansOfTransport::getDisplayName).orElse(""));
-                activityName.setText(getValue().getActivity().getFullName());
+                activityName.setText(getValue().getActivity().getName());
                 timer.scheduleAtFixedRate(new TimerTask() {
                     @Override
                     public void run() {
@@ -51,6 +57,7 @@ public class CurrentEntryDisplay extends VBox {
                     }
                 }, 0, 500);
                 activityWhat.setText(getValue().getWhat());
+                button.setText("Stop");
             }
         }
 
@@ -62,47 +69,36 @@ public class CurrentEntryDisplay extends VBox {
         }
     };
 
-    private final LogEntryList logEntryList;
+    private final Consumer<LogEntry> newEntry;
 
-    public CurrentEntryDisplay(LogEntry entry, LogEntryList logEntryList) {
-        this.logEntryList = logEntryList;
-        this.entry.setValue(entry);
+    public CurrentEntryDisplay(Consumer<LogEntry> newEntry) {
+        super();
+        this.newEntry = newEntry;
 
-        final Font font = new Font(16);
-        activityName.setFont(font);
-        duration.setFont(font);
-
-        Label title = new Label("Current Activity, ");
-        title.setLabelFor(activityName);
-
-        Label startTimeLabel = new Label("started at ");
-        startTimeLabel.setLabelFor(startTime);
-
-        Label transportSeparator = new Label(", ");
-        transportSeparator.setLabelFor(transport);
-
-        Region spacer = new Region();
-        spacer.setPrefWidth(30);
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        final HBox titleLine = new HBox(title, startTimeLabel, startTime);
-        if (!transport.getText().isEmpty()) {
-            titleLine.getChildren().add(transportSeparator);
-            titleLine.getChildren().add(transport);
-        }
-        transport.textProperty().addListener(observable -> {
-            titleLine.getChildren().remove(transportSeparator);
-            titleLine.getChildren().remove(transport);
-            if (!transport.getText().isEmpty()) {
-                titleLine.getChildren().add(transportSeparator);
-                titleLine.getChildren().add(transport);
-            }
-        });
-        getChildren().add(titleLine);
-        getChildren().add(new HBox(activityName, spacer, duration));
-        getChildren().add(activityWhat);
-
+        entry.setValue(LogEntry.FACTORY.getUnfinishedEntry());
+        button.setOnAction(this::onButtonPress);
         setOnMouseClicked(this::doubleClick);
+
+        createLayout();
+    }
+
+    private void onButtonPress(ActionEvent event) {
+        if (entry.get() == null) {
+            final Optional<LogEntry> logEntry = new LogEntryDialog().showAndWait();
+            logEntry.ifPresent(value -> {
+                if (value.getEnd() == null) entry.setValue(value);
+                else newEntry.accept(value);
+            });
+        } else {
+            final Optional<LocalDateTime> endTime = new EndTimeDialog().showAndWait();
+            endTime.ifPresent(end -> {
+                entry.get().endProperty().setValue(end);
+                if (LogEntry.FACTORY.update(entry.get())) {
+                    newEntry.accept(entry.get());
+                    entry.set(LogEntry.FACTORY.getUnfinishedEntry());
+                }
+            });
+        }
     }
 
     private void doubleClick(MouseEvent mouseEvent) {
@@ -111,20 +107,31 @@ public class CurrentEntryDisplay extends VBox {
             if (logEntry.getEnd() == null) entry.setValue(logEntry);
             else {
                 entry.setValue(null);
-                logEntryList.getEntries().add(logEntry);
+                newEntry.accept(logEntry);
             }
         });
     }
 
-    public ObjectProperty<LogEntry> entryProperty() {
-        return entry;
-    }
+    private void createLayout() {
+        activityName.setFont(new Font(16));
 
-    public LogEntry getEntry() {
-        return entry.getValue();
-    }
+        Label title = new Label("Current Activity, ");
+        title.setLabelFor(activityName);
 
-    public void setEntry(LogEntry value) {
-        entry.setValue(value);
+        Label startTimeLabel = new Label("started at ");
+        startTimeLabel.setLabelFor(startTime);
+
+        Region spacer = new Region();
+        spacer.setPrefWidth(30);
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        GridPane.setHalignment(duration, HPos.CENTER);
+        addRow(0, new HBox(title, startTimeLabel, startTime), duration);
+        addRow(1, activityName, button);
+        addRow(2, activityWhat);
+
+        final ColumnConstraints grow = new ColumnConstraints();
+        grow.setHgrow(Priority.ALWAYS);
+        getColumnConstraints().add(grow);
     }
 }

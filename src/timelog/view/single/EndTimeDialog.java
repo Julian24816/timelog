@@ -1,4 +1,4 @@
-package timelog.view;
+package timelog.view.single;
 
 import javafx.beans.Observable;
 import javafx.geometry.Insets;
@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-class EndTimeDialog extends Dialog<LocalDateTime> {
+public class EndTimeDialog extends Dialog<LocalDateTime> {
     private final DatePicker date;
     private final TimeTextField time;
     private final Button okButton;

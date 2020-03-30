@@ -105,13 +105,6 @@ public final class Activity extends ModelObject<Activity> {
         return parent;
     }
 
-    public String getFullName() {
-        //TODO convert to binding
-        if (getId() == 0) return "(" + name.get() + ")";
-        if (parentId.get() == 0) return name.get();
-        return getParent().getFullName() + " > " + name.get();
-    }
-
     public Activity getParent() {
         return FACTORY.getForId(parentId.get());
     }
