@@ -1,12 +1,13 @@
 package timelog.view;
 
 import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -18,7 +19,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.VLineTo;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import timelog.model.Activity;
@@ -78,17 +78,30 @@ public class LogEntryList extends ScrollPane {
     }
 
     private static final class ActivityLine extends HBox {
-        private static final double TIME_TEXT_WIDTH = 25, TIME_TEXT_HEIGHT_x2 = 32;
+        private static final double TIME_TEXT_WIDTH = 25, TIME_TEXT_HEIGHT_x2 = 32, DETAILS_VISIBLE_HEIGHT = 16;
         private final LogEntry entry;
+        private BooleanBinding detailsVisibility;
 
         private ActivityLine(LogEntry entry) {
             super(10);
             this.entry = entry;
-            getChildren().addAll(getTimeVBox(entry), getDetails(entry));
+            createLayout(entry);
             setOnMouseClicked(this::onMouseClicked);
             backgroundProperty().bind(CustomBindings.apply(
                     CustomBindings.select(entry.activityProperty(), Activity::colorProperty),
                     color -> new Background(new BackgroundFill(Color.valueOf(color), null, null))));
+        }
+
+        private void createLayout(LogEntry entry) {
+            final VBox time = getTimeVBox(entry);
+            final TextFlow details = getDetails(entry);
+            detailsVisibility = time.heightProperty().greaterThanOrEqualTo(DETAILS_VISIBLE_HEIGHT);
+            detailsVisibility.addListener((observable, old, newValue) -> {
+                getChildren().remove(details);
+                if (detailsVisibility.get()) getChildren().add(details);
+            });
+            getChildren().add(time);
+            if (detailsVisibility.get()) getChildren().add(details);
         }
 
         private VBox getTimeVBox(LogEntry entry) {
@@ -123,14 +136,14 @@ public class LogEntryList extends ScrollPane {
         }
 
         private TextFlow getDetails(LogEntry entry) {
-            final Text activityName = new Text();
-            activityName.textProperty().bind(Bindings.select(entry, "activity", "name"));
-            activityName.setFont(new Font(16));
+            final Label activityName = new Label();
+            activityName.textProperty().bind(CustomBindings.select(entry.activityProperty(), Activity::nameProperty));
+            //activityName.setFont(new Font(16));
 
-            final Text what = new Text();
+            final Label what = new Label();
             what.textProperty().bind(entry.whatProperty());
 
-            final Text transport = new Text();
+            final Label transport = new Label();
             transport.textProperty().bind(CustomBindings.ifNull(entry.meansOfTransportProperty(),
                     p -> ", " + p.getDisplayName(), ""));
 
