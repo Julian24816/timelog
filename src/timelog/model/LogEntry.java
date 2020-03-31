@@ -149,7 +149,11 @@ public final class LogEntry extends ModelObject<LogEntry> {
         }
 
         public Collection<LogEntry> getAllFinishedOn(LocalDate date) {
-            return getAllFinishedBetween(date.atTime(0, 0), date.plus(1, ChronoUnit.DAYS).atTime(0, 0));
+            return getAllFinishedBetween(date, date.plus(1, ChronoUnit.DAYS));
+        }
+
+        public Collection<LogEntry> getAllFinishedBetween(final LocalDate beginInclusive, final LocalDate endExclusive) {
+            return getAllFinishedBetween(beginInclusive.atTime(0, 0), endExclusive.atTime(0, 0));
         }
 
         public Collection<LogEntry> getAllFinishedBetween(final LocalDateTime from, final LocalDateTime to) {

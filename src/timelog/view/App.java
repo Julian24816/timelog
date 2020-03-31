@@ -22,9 +22,20 @@ public class App extends Application {
 
     @Override
     public void init() throws IOException {
-        Preferences.loadPropertiesFile(Preferences.DEFAULTS_FILE_NAME);
+        setDefaultPreferences();
         Preferences.loadPropertiesFile(Preferences.FILE_NAME);
         Database.setErrorHandler(ErrorAlert::show);
+    }
+
+    private void setDefaultPreferences() {
+        Preferences.set("DatabaseDriver", "SQLite");
+        Preferences.set("DatabaseURL", ":memory:");
+        Preferences.set("DatabaseUsername", "");
+        Preferences.set("DatabasePassword", "");
+        Preferences.set("AutomaticLogin", false);
+        Preferences.set("SleepID", -1);
+        Preferences.set("SleepLineHeight", 20);
+        Preferences.set("MinuteToPixelScale", 2f);
     }
 
     @Override

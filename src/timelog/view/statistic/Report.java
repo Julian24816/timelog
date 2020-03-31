@@ -7,19 +7,33 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
+import timelog.model.LogEntry;
+import timelog.statistic.ActivityStatistic;
+import timelog.statistic.QualityTimeStatistic;
 import timelog.statistic.Statistic;
 import timelog.statistic.StatisticalDatum;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public class Report extends Alert {
-    public Report(Statistic<?, ?>... statistics) {
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+    public Report(String timeFrame, Collection<LogEntry> logEntries) {
         super(AlertType.INFORMATION);
+        setTitle("Report");
+        setHeaderText("Report for " + timeFrame);
 
         final VBox vBox = new VBox(20);
-        for (Statistic<?, ?> statistic : statistics) vBox.getChildren().add(new ReportLine<>(statistic, 1));
+        vBox.getChildren().add(new ReportLine<>(ActivityStatistic.of(logEntries), 1));
+        vBox.getChildren().add(new ReportLine<>(QualityTimeStatistic.of(logEntries), 1));
 
         final ScrollPane scrollPane = new ScrollPane(vBox);
         scrollPane.setFitToWidth(true);
@@ -27,6 +41,40 @@ public class Report extends Alert {
         getDialogPane().setContent(scrollPane);
         getDialogPane().setPrefSize(250, 400);
         setResizable(true);
+    }
+
+    public static Report today() {
+        return on(LocalDate.now());
+    }
+
+    public static Report on(LocalDate date) {
+        return new Report(FORMAT.format(date), LogEntry.FACTORY.getAllFinishedOn(date));
+    }
+
+    public static Report yesterday() {
+        return on(LocalDate.now().minus(1, ChronoUnit.DAYS));
+    }
+
+    public static Report last7days() {
+        return between(LocalDate.now().minus(7, ChronoUnit.DAYS), LocalDate.now().minus(1, ChronoUnit.DAYS));
+    }
+
+    public static Report between(LocalDate begin, LocalDate end) {
+        if (!begin.isBefore(end)) throw new IllegalArgumentException();
+        return new Report(FORMAT.format(begin) + " - " + FORMAT.format(end),
+                LogEntry.FACTORY.getAllFinishedBetween(begin, end.plus(1, ChronoUnit.DAYS)));
+    }
+
+    public static Report currentWeek() {
+        final LocalDate begin = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        final LocalDate end = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        return between(begin, end);
+    }
+
+    public static Report previousWeek() {
+        final LocalDate end = LocalDate.now().with(TemporalAdjusters.previous(DayOfWeek.SUNDAY));
+        final LocalDate begin = end.with(TemporalAdjusters.previous(DayOfWeek.MONDAY));
+        return between(begin, end);
     }
 
     private static class ReportLine<T, D> extends StackPane {
@@ -59,8 +107,8 @@ public class Report extends Alert {
             Collections.sort(subStatistics);
             for (Statistic<T, D> subStatistic : subStatistics) {
                 final ReportLine<T, D> line = new ReportLine<>(subStatistic, Math.max(0, expandedDepth - 1));
+                line.setPadding(new Insets(0, 0, 0, 10));
                 all.getChildren().add(line);
-                VBox.setMargin(line, new Insets(0, 0, 0, 10));
             }
             return all.getChildren().size() > 1 ? all : null;
         }

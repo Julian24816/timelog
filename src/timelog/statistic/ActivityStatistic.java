@@ -11,7 +11,7 @@ public final class ActivityStatistic extends Statistic<Activity, Duration> {
         super(root, root.getId() == 0 ? "Activity" : root.getName(), DurationDatum::new);
     }
 
-    static ActivityStatistic of(Collection<LogEntry> entries) {
+    public static ActivityStatistic of(Collection<LogEntry> entries) {
         final ActivityStatistic statistic = new ActivityStatistic(Activity.FACTORY.getForId(0));
         entries.forEach(logEntry -> statistic.add(logEntry.getActivity(), DurationDatum.of(logEntry)));
         return statistic;

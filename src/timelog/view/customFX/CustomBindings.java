@@ -1,10 +1,13 @@
 package timelog.view.customFX;
 
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.BooleanExpression;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.control.TextField;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -54,5 +57,18 @@ public final class CustomBindings {
         bindToCurrentValue.run();
         observableValue.addListener(observable -> bindToCurrentValue.run());
         return property;
+    }
+
+    public static BooleanExpression matches(TextField textField, String regex) {
+        return new BooleanBinding() {
+            {
+                bind(textField.textProperty());
+            }
+
+            @Override
+            protected boolean computeValue() {
+                return textField.getText().matches(regex);
+            }
+        };
     }
 }

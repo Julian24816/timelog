@@ -30,9 +30,7 @@ public final class DurationDatum implements StatisticalDatum<Duration> {
 
     @Override
     public StatisticalDatum<Duration> plus(StatisticalDatum<Duration> value) {
-        final DurationDatum result = new DurationDatum(duration.plus(value.get()));
-        System.out.printf("%s + %s = %s\n", this, value, result);
-        return result;
+        return new DurationDatum(duration.plus(value.get()));
     }
 
     @Override

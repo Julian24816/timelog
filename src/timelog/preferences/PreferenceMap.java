@@ -15,7 +15,7 @@ public final class PreferenceMap {
 
     public void mapTo(CheckBox control, String key) {
         checkBoxes.put(control, key);
-        control.setSelected(Preferences.get(key).equals("true"));
+        control.setSelected(Preferences.getBoolean(key));
     }
 
     public void mapTo(TextInputControl control, String key) {

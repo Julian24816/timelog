@@ -10,9 +10,13 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import timelog.model.Activity;
 import timelog.model.LogEntry;
 import timelog.model.MeansOfTransport;
 import timelog.view.customFX.CustomBindings;
@@ -43,6 +47,7 @@ public class CurrentEntryDisplay extends GridPane {
         protected void invalidated() {
             if (getValue() == null) {
                 startTime.setText("--:--");
+                activityName.textProperty().unbind();
                 activityName.setText("No Current Activity");
                 duration.setText("--:--");
                 button.setText("New");
@@ -50,7 +55,7 @@ public class CurrentEntryDisplay extends GridPane {
                 what.unbind();
             } else {
                 startTime.setText(TimeTextField.TIME_FORMATTER.format(getValue().getStart().toLocalTime()));
-                activityName.setText(getValue().getActivity().getName());
+                activityName.textProperty().bind(CustomBindings.select(getValue().activityProperty(), Activity::nameProperty));
                 timer.scheduleAtFixedRate(new TimerTask() {
                     @Override
                     public void run() {
@@ -123,16 +128,17 @@ public class CurrentEntryDisplay extends GridPane {
         Label startTimeLabel = new Label("started at ");
         startTimeLabel.setLabelFor(startTime);
 
-        Region spacer = new Region();
-        spacer.setPrefWidth(30);
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Label durationLabel = new Label(", active for ");
+        durationLabel.setLabelFor(duration);
 
         GridPane.setHalignment(duration, HPos.CENTER);
-        addRow(0, new HBox(title, startTimeLabel, startTime), duration);
-        addRow(1, new JoiningTextFlow(activityName, what, transport), button);
+        add(new HBox(title, startTimeLabel, startTime, durationLabel, duration), 0, 0);
+        add(new JoiningTextFlow(activityName, what, transport), 0, 1);
+        add(button, 1, 0, 1, 2);
+        button.setMaxHeight(Double.MAX_VALUE);
 
-        final ColumnConstraints grow = new ColumnConstraints();
-        grow.setHgrow(Priority.ALWAYS);
-        getColumnConstraints().add(grow);
+        final ColumnConstraints growColumn = new ColumnConstraints();
+        growColumn.setHgrow(Priority.ALWAYS);
+        getColumnConstraints().add(growColumn);
     }
 }

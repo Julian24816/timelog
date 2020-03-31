@@ -10,7 +10,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Properties;
 
 public final class Preferences {
-    public static final String DEFAULTS_FILE_NAME = "defaults.properties";
     public static final String FILE_NAME = "preferences.properties";
     private static final Properties PROPERTIES = new Properties();
 
@@ -34,7 +33,31 @@ public final class Preferences {
         return PROPERTIES.getProperty(key);
     }
 
+    public static boolean getBoolean(String key) {
+        return Boolean.parseBoolean(PROPERTIES.getProperty(key));
+    }
+
+    public static int getInt(String key) {
+        return Integer.parseInt(PROPERTIES.getProperty(key));
+    }
+
+    public static double getDouble(String key) {
+        return Double.parseDouble(PROPERTIES.getProperty(key));
+    }
+
     public static void set(String key, String value) {
         PROPERTIES.setProperty(key, value);
+    }
+
+    public static void set(String key, boolean value) {
+        PROPERTIES.setProperty(key, String.valueOf(value));
+    }
+
+    public static void set(String key, int value) {
+        PROPERTIES.setProperty(key, String.valueOf(value));
+    }
+
+    public static void set(String key, double value) {
+        PROPERTIES.setProperty(key, String.valueOf(value));
     }
 }

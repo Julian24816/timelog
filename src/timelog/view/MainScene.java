@@ -2,6 +2,7 @@ package timelog.view;
 
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -10,8 +11,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import timelog.model.LogEntry;
-import timelog.statistic.Statistics;
 import timelog.view.edit.LogEntryDialog;
+import timelog.view.edit.PreferencesDialog;
 import timelog.view.statistic.Report;
 
 import java.time.LocalDate;
@@ -19,10 +20,12 @@ import java.util.function.Supplier;
 
 public class MainScene extends Scene {
 
+    private final LogEntryList logEntryList;
+
     public MainScene() {
         super(new BorderPane(), 350, Region.USE_COMPUTED_SIZE);
 
-        final LogEntryList logEntryList = new LogEntryList();
+        logEntryList = new LogEntryList();
         logEntryList.getEntries().addAll(LogEntry.FACTORY.getAllFinishedOn(LocalDate.now()));
 
         final CurrentEntryDisplay currentEntryDisplay = new CurrentEntryDisplay(logEntry -> {
@@ -39,22 +42,35 @@ public class MainScene extends Scene {
     }
 
     private MenuBar getMenuBar() {
-
-        final MenuItem editAll = new MenuItem("Edit All");
+        final MenuItem editAll = new MenuItem("Edit All Entries");
         editAll.setOnAction(event -> LogEntry.FACTORY.getAll().forEach(logEntry -> new LogEntryDialog(logEntry).showAndWait()));
+
+        final MenuItem preferences = new MenuItem("Preferences");
+        preferences.setOnAction(event -> {
+            new PreferencesDialog().showAndWait()
+                    .filter(buttonType -> buttonType.equals(ButtonType.OK))
+                    .ifPresent(ok -> {
+                        logEntryList.getEntries().clear();
+                        logEntryList.getEntries().addAll(LogEntry.FACTORY.getAllFinishedOn(LocalDate.now()));
+                    });
+        });
 
         return new MenuBar(
                 new Menu("Statistic", null,
-                        getReportMenuItem("Today",
-                                () -> new Report(Statistics.activitiesToday(), Statistics.qualityTimeToday())),
-                        getReportMenuItem("Last 7 days",
-                                () -> new Report(Statistics.activitiesThisWeek(), Statistics.qualityTimeThisWeek()))),
-                new Menu("Tools", null, editAll));
+                        reportMenuItem("Today", Report::today),
+                        reportMenuItem("Yesterday", Report::yesterday),
+                        reportMenuItem("Last 7 days", Report::last7days),
+                        reportMenuItem("Current Week", Report::currentWeek),
+                        reportMenuItem("Previous Week", Report::previousWeek)
+                ),
+                new Menu("Tools", null, editAll, preferences)
+        );
     }
 
-    private MenuItem getReportMenuItem(final String name, final Supplier<Report> report) {
-        final MenuItem thisWeekMenuItem = new MenuItem(name);
-        thisWeekMenuItem.setOnAction(event -> report.get().show());
-        return thisWeekMenuItem;
+    private MenuItem reportMenuItem(final String yesterday, final Supplier<Report> report) {
+        final MenuItem menuItem = new MenuItem(yesterday);
+        menuItem.setOnAction(event -> report.get().show());
+        return menuItem;
     }
+
 }
