@@ -53,6 +53,7 @@ public class CurrentEntryDisplay extends GridPane {
                 button.setText("New");
                 transport.unbind();
                 transport.setValue("");
+                what.unbind();
                 what.setValue("");
             } else {
                 startTime.setText(TimeTextField.TIME_FORMATTER.format(getValue().getStart().toLocalTime()));

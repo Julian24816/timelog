@@ -43,11 +43,11 @@ public class LogEntryList extends ScrollPane {
             final int minuteMarkEvery = Preferences.getInt("MinuteMarkEvery");
             final double scale = Preferences.getDouble("MinuteToPixelScale");
             final double markWidth = Preferences.getDouble("MinuteMarkWidth");
-            double y = minuteMarkEvery * scale;
+            double y = minuteMarkEvery / scale;
             context.clearRect(0, 0, width, height);
             while (y < height) {
                 context.strokeLine(width - markWidth, y + 0.5, width, y + 0.5);
-                y += minuteMarkEvery * scale;
+                y += minuteMarkEvery / scale;
             }
         }
     };
