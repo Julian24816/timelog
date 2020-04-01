@@ -51,7 +51,7 @@ public final class ActivityDialog extends ObjectDialog<Activity> {
         );
     }
 
-    public String colorToHex(Color value) {
+    public static String colorToHex(Color value) {
         long red = Math.round(value.getRed() * 255);
         long green = Math.round(value.getGreen() * 255);
         long blue = Math.round(value.getBlue() * 255);

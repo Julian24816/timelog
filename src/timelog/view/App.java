@@ -36,6 +36,9 @@ public class App extends Application {
         Preferences.set("SleepID", -1);
         Preferences.set("SleepLineHeight", 20);
         Preferences.set("MinuteToPixelScale", 2f);
+        Preferences.set("MinuteMarkEvery", 30);
+        Preferences.set("MinuteMarkWidth", 10);
+        Preferences.set("MinuteMarkColor", "BLACK");
     }
 
     @Override

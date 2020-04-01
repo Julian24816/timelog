@@ -1,10 +1,7 @@
 package timelog.view.edit;
 
 import javafx.beans.binding.BooleanExpression;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import timelog.preferences.PreferenceMap;
 import timelog.view.customFX.CustomBindings;
 import timelog.view.customFX.GridPane2C;
@@ -25,6 +22,20 @@ public class PreferencesDialog extends Dialog<ButtonType> {
         final TextField scaling = gridPane2C.addRow("Minute To Pixel Scale", new TextField());
         preferenceMap.mapTo(scaling, "MinuteToPixelScale");
 
+        gridPane2C.addSeparator();
+
+        final TextField marks = gridPane2C.addRow("Minute Mark Every", new TextField());
+        preferenceMap.mapTo(marks, "MinuteMarkEvery");
+
+        final TextField marksWidth = gridPane2C.addRow("Minute Mark Width", new TextField());
+        preferenceMap.mapTo(marksWidth, "MinuteMarkWidth");
+        marksWidth.setPromptText("set to 0 to disable");
+
+        final ColorPicker markColor = gridPane2C.addRow("Minute Mark Color", new ColorPicker());
+        preferenceMap.mapTo(markColor, "MinuteMarkColor");
+
+        gridPane2C.addSeparator();
+
         final TextField sleepID = gridPane2C.addRow("ID of Sleep Activity", new TextField());
         preferenceMap.mapTo(sleepID, "SleepID");
         sleepID.setPromptText("set to -1 to disable");
@@ -37,6 +48,8 @@ public class PreferencesDialog extends Dialog<ButtonType> {
         okButton.setOnAction(event -> preferenceMap.dumpPreferences());
 
         okEnabled = CustomBindings.matches(scaling, "\\d+(\\.\\d+)?")
+                .and(CustomBindings.matches(marks, "\\d+"))
+                .and(CustomBindings.matches(marksWidth, "\\d+"))
                 .and(CustomBindings.matches(sleepID, "-1|\\d+"))
                 .and(CustomBindings.matches(sleepLineHeight, "\\d+"));
         okEnabled.addListener(observable -> okButton.setDisable(!okEnabled.getValue()));

@@ -52,7 +52,8 @@ public class CurrentEntryDisplay extends GridPane {
                 duration.setText("--:--");
                 button.setText("New");
                 transport.unbind();
-                what.unbind();
+                transport.setValue("");
+                what.setValue("");
             } else {
                 startTime.setText(TimeTextField.TIME_FORMATTER.format(getValue().getStart().toLocalTime()));
                 activityName.textProperty().bind(CustomBindings.select(getValue().activityProperty(), Activity::nameProperty));

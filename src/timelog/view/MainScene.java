@@ -45,15 +45,17 @@ public class MainScene extends Scene {
         final MenuItem editAll = new MenuItem("Edit All Entries");
         editAll.setOnAction(event -> LogEntry.FACTORY.getAll().forEach(logEntry -> new LogEntryDialog(logEntry).showAndWait()));
 
-        final MenuItem preferences = new MenuItem("Preferences");
-        preferences.setOnAction(event -> {
-            new PreferencesDialog().showAndWait()
-                    .filter(buttonType -> buttonType.equals(ButtonType.OK))
-                    .ifPresent(ok -> {
-                        logEntryList.getEntries().clear();
-                        logEntryList.getEntries().addAll(LogEntry.FACTORY.getAllFinishedOn(LocalDate.now()));
-                    });
+        final MenuItem reload = new MenuItem("Reload List");
+        reload.setOnAction(event -> {
+            logEntryList.getEntries().clear();
+            logEntryList.getEntries().addAll(LogEntry.FACTORY.getAllFinishedOn(LocalDate.now()));
+            logEntryList.refreshCanvas();
         });
+
+        final MenuItem preferences = new MenuItem("Preferences");
+        preferences.setOnAction(event -> new PreferencesDialog().showAndWait()
+                .filter(buttonType -> buttonType.equals(ButtonType.OK))
+                .ifPresent(ok -> reload.fire()));
 
         return new MenuBar(
                 new Menu("Statistic", null,
@@ -63,7 +65,7 @@ public class MainScene extends Scene {
                         reportMenuItem("Current Week", Report::currentWeek),
                         reportMenuItem("Previous Week", Report::previousWeek)
                 ),
-                new Menu("Tools", null, editAll, preferences)
+                new Menu("Tools", null, editAll, reload, preferences)
         );
     }
 

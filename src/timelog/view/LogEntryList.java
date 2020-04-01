@@ -7,13 +7,11 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
@@ -24,10 +22,7 @@ import timelog.model.Activity;
 import timelog.model.LogEntry;
 import timelog.model.MeansOfTransport;
 import timelog.preferences.Preferences;
-import timelog.view.customFX.CustomBindings;
-import timelog.view.customFX.ErrorAlert;
-import timelog.view.customFX.JoiningTextFlow;
-import timelog.view.customFX.TimeText;
+import timelog.view.customFX.*;
 import timelog.view.edit.LogEntryDialog;
 
 import java.time.temporal.ChronoUnit;
@@ -36,6 +31,27 @@ import java.util.function.Consumer;
 
 public class LogEntryList extends ScrollPane {
 
+    private final ResizableCanvas canvas = new ResizableCanvas() {
+        @Override
+        public void draw() {
+            final double height = getHeight();
+            final double width = getWidth();
+            final GraphicsContext context = getGraphicsContext2D();
+            context.setStroke(Color.valueOf(Preferences.get("MinuteMarkColor")));
+            context.setLineWidth(1);
+
+            final int minuteMarkEvery = Preferences.getInt("MinuteMarkEvery");
+            final double scale = Preferences.getDouble("MinuteToPixelScale");
+            final double markWidth = Preferences.getDouble("MinuteMarkWidth");
+            double y = minuteMarkEvery * scale;
+            context.clearRect(0, 0, width, height);
+            while (y < height) {
+                context.strokeLine(width - markWidth, y + 0.5, width, y + 0.5);
+                y += minuteMarkEvery * scale;
+            }
+        }
+    };
+
     private final VBox vBox = new VBox();
     private final Text placeholder = new Text("no activities");
 
@@ -43,9 +59,23 @@ public class LogEntryList extends ScrollPane {
 
     public LogEntryList() {
         super();
-        VBox.setMargin(placeholder, new Insets(20));
+        canvas.setWidth(Preferences.getDouble("MinuteMarkWidth"));
+        InvalidationListener resizeCanvas = observable -> {
+            canvas.setHeight(Math.max(vBox.getHeight(), getViewportBounds().getHeight()));
+            canvas.setWidth(getViewportBounds().getWidth());
+        };
+        viewportBoundsProperty().addListener(resizeCanvas);
+        vBox.heightProperty().addListener(resizeCanvas);
+        vBox.setMaxHeight(Region.USE_PREF_SIZE);
+
         vBox.getChildren().add(placeholder);
-        setContent(vBox);
+        VBox.setMargin(placeholder, new Insets(20));
+
+        setContent(new StackPane(vBox, canvas));
+        StackPane.setAlignment(vBox, Pos.TOP_LEFT);
+        StackPane.setAlignment(canvas, Pos.TOP_RIGHT);
+        HBox.setHgrow(vBox, Priority.ALWAYS);
+
         setFitToWidth(true);
         setPrefHeight(500);
 
@@ -76,6 +106,10 @@ public class LogEntryList extends ScrollPane {
             vBox.getChildren().add(placeholder);
     }
 
+    public void refreshCanvas() {
+        canvas.draw();
+    }
+
     public ObservableList<LogEntry> getEntries() {
         return entries;
     }
@@ -97,7 +131,7 @@ public class LogEntryList extends ScrollPane {
         }
 
         private void createLayout(LogEntry entry) {
-            final VBox time = getTimeVBox(entry, entry.getActivity().getId() == Preferences.getInt("SleepID") ? Preferences.getInt("SleepLineHeight") : -1);
+            final VBox time = getTimeVBox(entry, entry.getActivity().getId() == Preferences.getInt("SleepID"));
             final TextFlow details = getDetails(entry);
             detailsVisibility = time.heightProperty().greaterThanOrEqualTo(DETAILS_VISIBLE_HEIGHT);
             detailsVisibility.addListener(observable -> {
@@ -107,12 +141,12 @@ public class LogEntryList extends ScrollPane {
             getChildren().add(time);
         }
 
-        private VBox getTimeVBox(LogEntry entry, double fixedLineHeight) {
+        private VBox getTimeVBox(LogEntry entry, boolean sleep) {
             final TimeText start = new TimeText();
             start.valueProperty().bind(entry.startProperty());
             final TimeText end = new TimeText();
             end.valueProperty().bind(entry.endProperty());
-            final VLineTo vLineTo = new VLineTo(fixedLineHeight);
+            final VLineTo vLineTo = new VLineTo(1);
             final Path line = new Path(new MoveTo(0, 0), vLineTo);
             final VBox time = new VBox(line);
             time.setAlignment(Pos.CENTER);
@@ -125,12 +159,13 @@ public class LogEntryList extends ScrollPane {
                     time.getChildren().add(end);
                     vLineTo.setY(lineHeight - TIME_TEXT_HEIGHT * 2);
                 } else if (lineHeight > TIME_TEXT_HEIGHT) {
-                    time.getChildren().add(end);
+                    if (sleep) time.getChildren().add(end);
+                    else time.getChildren().add(0, start);
                     vLineTo.setY(lineHeight - TIME_TEXT_HEIGHT);
                 } else vLineTo.setY(lineHeight);
             };
 
-            if (fixedLineHeight >= 0) applyLineHeight.accept(fixedLineHeight);
+            if (sleep) applyLineHeight.accept(Preferences.getDouble("SleepLineHeight"));
             else {
                 InvalidationListener invalidated = observable -> {
                     if (entry.getEnd() == null) return;
@@ -146,17 +181,17 @@ public class LogEntryList extends ScrollPane {
             return time;
         }
 
+        private void onMouseClicked(MouseEvent mouseEvent) {
+            if (mouseEvent.getClickCount() != 2 || !mouseEvent.getButton().equals(MouseButton.PRIMARY)) return;
+            new LogEntryDialog(entry).show();
+        }
+
         private JoiningTextFlow getDetails(LogEntry entry) {
             final Text activityName = new Text();
             activityName.textProperty().bind(CustomBindings.select(entry.activityProperty(), Activity::nameProperty));
             return new JoiningTextFlow(activityName,
                     entry.whatProperty(),
                     CustomBindings.select(entry.meansOfTransportProperty(), MeansOfTransport::nameProperty));
-        }
-
-        private void onMouseClicked(MouseEvent mouseEvent) {
-            if (mouseEvent.getClickCount() != 2 || !mouseEvent.getButton().equals(MouseButton.PRIMARY)) return;
-            new LogEntryDialog(entry).show();
         }
 
         @Override
