@@ -62,7 +62,6 @@ public class LogEntryList extends ScrollPane {
         canvas.setWidth(Preferences.getDouble("MinuteMarkWidth"));
         InvalidationListener resizeCanvas = observable -> {
             canvas.setHeight(Math.max(vBox.getHeight(), getViewportBounds().getHeight()));
-            canvas.setWidth(getViewportBounds().getWidth());
         };
         viewportBoundsProperty().addListener(resizeCanvas);
         vBox.heightProperty().addListener(resizeCanvas);
@@ -107,6 +106,7 @@ public class LogEntryList extends ScrollPane {
     }
 
     public void refreshCanvas() {
+        canvas.setWidth(Preferences.getDouble("MinuteMarkWidth"));
         canvas.draw();
     }
 

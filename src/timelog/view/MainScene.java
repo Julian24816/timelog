@@ -16,6 +16,7 @@ import timelog.view.edit.PreferencesDialog;
 import timelog.view.statistic.Report;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class MainScene extends Scene {
@@ -49,13 +50,15 @@ public class MainScene extends Scene {
         reload.setOnAction(event -> {
             logEntryList.getEntries().clear();
             logEntryList.getEntries().addAll(LogEntry.FACTORY.getAllFinishedOn(LocalDate.now()));
-            logEntryList.refreshCanvas();
         });
+
+        final MenuItem refreshCanvas = new MenuItem("Redraw Minute Marks");
+        refreshCanvas.setOnAction(event -> logEntryList.refreshCanvas());
 
         final MenuItem preferences = new MenuItem("Preferences");
         preferences.setOnAction(event -> new PreferencesDialog().showAndWait()
                 .filter(buttonType -> buttonType.equals(ButtonType.OK))
-                .ifPresent(ok -> reload.fire()));
+                .ifPresent(ok -> List.of(reload, refreshCanvas).forEach(MenuItem::fire)));
 
         return new MenuBar(
                 new Menu("Statistic", null,
@@ -65,7 +68,7 @@ public class MainScene extends Scene {
                         reportMenuItem("Current Week", Report::currentWeek),
                         reportMenuItem("Previous Week", Report::previousWeek)
                 ),
-                new Menu("Tools", null, editAll, reload, preferences)
+                new Menu("Tools", null, editAll, reload, refreshCanvas, preferences)
         );
     }
 
