@@ -44,7 +44,7 @@ public final class LogEntryDialog extends ObjectDialog<LogEntry> {
         gridPane2C.addButtonRow(Util.button("After Previous", this::afterPrevious), Util.button("Now", this::nowStart));
         endDate = gridPane2C.addRow("End", new DatePicker(LocalDate.now()));
         endTime = gridPane2C.addRow("", new TimeTextField(null));
-        gridPane2C.addButtonRow(Util.button("+1 min", this::plusOneMinute), Util.button("20 min", this::twentyMin),
+        gridPane2C.addButtonRow(Util.button("+1 min", () -> plusMinutes(1)), Util.button("+10 min", () -> plusMinutes(10)),
                 Util.button("Now", this::nowEnd), Util.button("Clear", this::clear));
 
         Util.applyAfterFocusLost(startDate);
@@ -78,21 +78,14 @@ public final class LogEntryDialog extends ObjectDialog<LogEntry> {
         startTime.setValue(LocalTime.now());
     }
 
-    private void plusOneMinute() {
+    private void plusMinutes(final int minutes) {
         LocalDateTime target;
         if (endDate.getValue() != null && endTime.getValue() != null)
             target = LocalDateTime.of(endDate.getValue(), endTime.getValue());
         else if (startDate.getValue() != null && startTime.getValue() != null)
             target = LocalDateTime.of(startDate.getValue(), startTime.getValue());
         else return;
-        target = target.plus(1, ChronoUnit.MINUTES);
-        endDate.setValue(target.toLocalDate());
-        endTime.setValue(target.toLocalTime());
-    }
-
-    private void twentyMin() {
-        if (startDate.getValue() == null || startTime.getValue() == null) return;
-        LocalDateTime target = LocalDateTime.of(startDate.getValue(), startTime.getValue()).plus(20, ChronoUnit.MINUTES);
+        target = target.plus(minutes, ChronoUnit.MINUTES);
         endDate.setValue(target.toLocalDate());
         endTime.setValue(target.toLocalTime());
     }
