@@ -7,7 +7,6 @@ import javafx.scene.control.Separator;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
-import javafx.scene.text.Text;
 
 public class GridPane2C extends GridPane {
     private final double space;
@@ -29,7 +28,7 @@ public class GridPane2C extends GridPane {
     }
 
     public void addSeparator() {
-        addRow(row++, new Text(""), new Separator());
+        add(new Separator(), 0, row++, 2, 1);
     }
 
     public void addButtonRow(Button... buttons) {

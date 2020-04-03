@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Report extends Alert {
-    public static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     public Report(String timeFrame, Collection<LogEntry> logEntries) {
         super(AlertType.INFORMATION);

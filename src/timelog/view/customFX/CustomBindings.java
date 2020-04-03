@@ -7,7 +7,6 @@ import javafx.beans.value.ObservableStringValue;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextField;
 
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -96,10 +95,6 @@ public final class CustomBindings {
                 return textField.getText().matches(regex);
             }
         };
-    }
-
-    public static BooleanExpression isBeforeToday(ObservableValue<LocalDate> localDateObservableValue) {
-        return applyToBoolean(localDateObservableValue, LocalDate::isBefore, LocalDate.now());
     }
 
     public static <P, Q> BooleanExpression applyToBoolean(ObservableValue<P> observableValue, BiFunction<P, Q, Boolean> select, Q param) {

@@ -8,7 +8,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import timelog.model.LogEntry;
-import timelog.view.customFX.CustomBindings;
 import timelog.view.customFX.DatePickerDialog;
 import timelog.view.edit.LogEntryDialog;
 import timelog.view.edit.PreferencesDialog;
@@ -74,24 +73,22 @@ public class MainScene extends Scene {
 
     private MenuItem certainDayReportMenuItem() {
         final MenuItem menuItem = new MenuItem("For Day ...");
-        menuItem.setOnAction(event -> new DatePickerDialog(CustomBindings::isBeforeToday)
+        menuItem.setOnAction(event -> DatePickerDialog.before(LocalDate.now().minus(1, ChronoUnit.DAYS))
                 .showAndWait().map(Report::on).ifPresent(Dialog::show));
         return menuItem;
     }
 
     private MenuItem certainTimeSpanReportMenuItem() {
         final MenuItem menuItem = new MenuItem("From ... To ...");
-        menuItem.setOnAction(event -> new DatePickerDialog(CustomBindings::isBeforeToday, "From").showAndWait()
-                .ifPresent(fromDate -> new DatePickerDialog(observable ->
-                        CustomBindings.applyToBoolean(observable, LocalDate::isBefore, LocalDate.now().plus(1, ChronoUnit.DAYS))
-                                .and(CustomBindings.applyToBoolean(observable, LocalDate::isAfter, fromDate)), "To").showAndWait()
-                        .ifPresent(toDate -> Report.between(fromDate, toDate).show())));
+        menuItem.setOnAction(event -> DatePickerDialog.before("From", LocalDate.now())
+                .showAndWait().ifPresent(fromDate -> DatePickerDialog.between("To", fromDate, LocalDate.now().plus(1, ChronoUnit.DAYS))
+                        .showAndWait().ifPresent(toDate -> Report.between(fromDate, toDate).show())));
         return menuItem;
     }
 
     private MenuItem lookAtMenuItem() {
         final MenuItem lookAt = new MenuItem("Look At Day ...");
-        lookAt.setOnAction(event -> new DatePickerDialog(CustomBindings::isBeforeToday)
+        lookAt.setOnAction(event -> DatePickerDialog.before(LocalDate.now())
                 .showAndWait().map(LookAtDayDialog::new).ifPresent(Dialog::show));
         return lookAt;
     }
