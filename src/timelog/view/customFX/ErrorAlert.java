@@ -8,8 +8,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public class ErrorAlert extends Alert {
-    public ErrorAlert(Throwable exception) {
-        super(AlertType.ERROR, String.format("Message: %s", exception.getMessage()));
+    public ErrorAlert(String context, Throwable exception) {
+        super(AlertType.ERROR, String.format("Context: %s\nMessage: %s", context, exception.getMessage()));
         setTitle("Error");
         setHeaderText("An " + exception.getClass() + " occurred.");
 
@@ -20,7 +20,7 @@ public class ErrorAlert extends Alert {
         getDialogPane().setExpandableContent(textArea);
     }
 
-    public static void show(Throwable e) {
-        Platform.runLater(() -> new ErrorAlert(e).show());
+    public static void show(String context, Throwable e) {
+        Platform.runLater(() -> new ErrorAlert(context, e).show());
     }
 }

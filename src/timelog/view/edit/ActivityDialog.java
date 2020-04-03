@@ -39,6 +39,10 @@ public final class ActivityDialog extends ObjectDialog<Activity> {
             parent.setValue(editedObject.getParent());
             name.setText(editedObject.getName());
             color.setValue(Color.valueOf(editedObject.getColor()));
+        } else {
+            parent.valueProperty().addListener(observable -> {
+                if (parent.getValue() != null) color.setValue(Color.valueOf(parent.getValue().getColor()));
+            });
         }
     }
 

@@ -37,4 +37,9 @@ public abstract class ModelObject<T extends ModelObject<?>> implements Comparabl
     public final int getId() {
         return id;
     }
+
+    @Override
+    public int compareTo(T o) {
+        return getDisplayName().compareTo(o.getDisplayName());
+    }
 }

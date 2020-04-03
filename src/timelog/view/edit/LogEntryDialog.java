@@ -5,10 +5,12 @@ import javafx.scene.control.TextField;
 import timelog.model.*;
 import timelog.view.customFX.CreatingChoiceBox;
 import timelog.view.customFX.TimeTextField;
+import timelog.view.customFX.Util;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 
 public final class LogEntryDialog extends ObjectDialog<LogEntry> {
     private final CreatingChoiceBox<Activity> activity;
@@ -39,8 +41,14 @@ public final class LogEntryDialog extends ObjectDialog<LogEntry> {
 
         startDate = gridPane2C.addRow("Start", new DatePicker(LocalDate.now()));
         startTime = gridPane2C.addRow("", new TimeTextField(LocalTime.now()));
+        gridPane2C.addButtonRow(Util.button("After Previous", this::afterPrevious), Util.button("Now", this::nowStart));
         endDate = gridPane2C.addRow("End", new DatePicker(LocalDate.now()));
         endTime = gridPane2C.addRow("", new TimeTextField(null));
+        gridPane2C.addButtonRow(Util.button("+1 min", this::plusOneMinute), Util.button("20 min", this::twentyMin),
+                Util.button("Now", this::nowEnd), Util.button("Clear", this::clear));
+
+        Util.applyAfterFocusLost(startDate);
+        Util.applyAfterFocusLost(endDate);
 
         addOKRequirement(activity.valueProperty().isNotNull());
         addOKRequirement(startDate.valueProperty().isNotNull());
@@ -57,6 +65,45 @@ public final class LogEntryDialog extends ObjectDialog<LogEntry> {
                 endTime.setValue(editedObject.getEnd().toLocalTime());
             }
         }
+    }
+
+    private void afterPrevious() {
+        LogEntry lastEntry = LogEntry.FACTORY.getLast();
+        startDate.setValue(lastEntry.getEnd().toLocalDate());
+        startTime.setValue(lastEntry.getEnd().toLocalTime());
+    }
+
+    private void nowStart() {
+        startDate.setValue(LocalDate.now());
+        startTime.setValue(LocalTime.now());
+    }
+
+    private void plusOneMinute() {
+        LocalDateTime target;
+        if (endDate.getValue() != null && endTime.getValue() != null)
+            target = LocalDateTime.of(endDate.getValue(), endTime.getValue());
+        else if (startDate.getValue() != null && startTime.getValue() != null)
+            target = LocalDateTime.of(startDate.getValue(), startTime.getValue());
+        else return;
+        target = target.plus(1, ChronoUnit.MINUTES);
+        endDate.setValue(target.toLocalDate());
+        endTime.setValue(target.toLocalTime());
+    }
+
+    private void twentyMin() {
+        if (startDate.getValue() == null || startTime.getValue() == null) return;
+        LocalDateTime target = LocalDateTime.of(startDate.getValue(), startTime.getValue()).plus(20, ChronoUnit.MINUTES);
+        endDate.setValue(target.toLocalDate());
+        endTime.setValue(target.toLocalTime());
+    }
+
+    private void nowEnd() {
+        endDate.setValue(LocalDate.now());
+        endTime.setValue(LocalTime.now());
+    }
+
+    private void clear() {
+        endTime.setValue(null);
     }
 
     @Override

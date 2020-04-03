@@ -84,9 +84,9 @@ public class LogEntryList extends ScrollPane {
     private void onListChanged(ListChangeListener.Change<? extends LogEntry> c) {
         while (c.next()) {
             if (c.wasPermutated()) {
-                ErrorAlert.show(new UnsupportedOperationException("entries list must not be permutated"));
+                ErrorAlert.show("ListChange", new UnsupportedOperationException("entries list must not be permutated"));
             } else if (c.wasUpdated()) {
-                ErrorAlert.show(new UnsupportedOperationException("entries list must not be updated"));
+                ErrorAlert.show("ListChange", new UnsupportedOperationException("entries list must not be updated"));
             } else {
                 for (LogEntry added : c.getAddedSubList()) addEntry(added);
                 for (LogEntry removed : c.getRemoved()) removeEntry(removed);

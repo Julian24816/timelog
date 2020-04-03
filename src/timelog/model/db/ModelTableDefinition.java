@@ -2,31 +2,50 @@ package timelog.model.db;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
-public final class ModelTableDefinition<T extends ModelObject<T>> extends TableDefinition<T> {
+public final class ModelTableDefinition<T extends ModelObject<T>> {
+    final String tableName;
 
-    private final String columnNamesWithPlaceholders;
-    private final String columnNames;
-    private final String insertPlaceholders;
+    final int numberOfColumns;
+    final List<ColumnType<?>> types;
+    final List<Function<T, ?>> getters;
+
+    final String columnNames;
+    final String insertPlaceholders;
+    final String updatePlaceholders;
 
     public ModelTableDefinition(String tableName) {
-        super(tableName, "id", ColumnType.INTEGER, ModelObject::getId);
-        this.columnNamesWithPlaceholders = "";
+        this.tableName = tableName;
+
+        this.numberOfColumns = 0;
+        this.types = new ArrayList<>();
+        this.getters = new ArrayList<>();
+
         this.columnNames = "";
         this.insertPlaceholders = "";
+        this.updatePlaceholders = "";
     }
 
     private <C> ModelTableDefinition(ModelTableDefinition<T> extend, String anotherColumn, ColumnType<C> type, Function<T, C> getter) {
-        super(extend, anotherColumn, type, getter);
-        if (getNumberOfColumns() == 1) {
-            columnNamesWithPlaceholders = anotherColumn + "=?";
+        this.tableName = extend.tableName;
+
+        this.numberOfColumns = extend.numberOfColumns + 1;
+        this.types = new ArrayList<>(extend.types);
+        this.types.add(type);
+        this.getters = new ArrayList<>(extend.getters);
+        this.getters.add(getter);
+
+        if (this.numberOfColumns == 1) {
             columnNames = anotherColumn;
             insertPlaceholders = "?";
+            updatePlaceholders = anotherColumn + "=?";
         } else {
-            columnNamesWithPlaceholders = extend.columnNamesWithPlaceholders + "," + anotherColumn + "=?";
             columnNames = extend.columnNames + "," + anotherColumn;
             insertPlaceholders = extend.insertPlaceholders + ",?";
+            updatePlaceholders = extend.updatePlaceholders + "," + anotherColumn + "=?";
         }
     }
 
@@ -34,41 +53,33 @@ public final class ModelTableDefinition<T extends ModelObject<T>> extends TableD
         return new ModelTableDefinition<>(this, anotherColumn, type, getter);
     }
 
-    @Override
-    String getInsertSQL() {
+    public String getInsertSQL() {
         return "INSERT INTO " + tableName + "(" + columnNames + ") VALUES (" + insertPlaceholders + ")";
     }
 
-    @Override
-    void setSQLParams(PreparedStatement statement, Object[] params) throws SQLException {
+    public void setInsertParams(PreparedStatement statement, Object[] params) throws SQLException {
         if (params.length != getNumberOfColumns()) throw new IllegalArgumentException("wrong number of parameters");
-        for (int columnNumber = 1; columnNumber < types.size(); columnNumber++) {
-            ColumnType<?> type = types.get(columnNumber);
-            Object param = params[columnNumber - 1];
-            type.apply(statement, columnNumber, param);
+        for (int i = 0; i < types.size(); i++) {
+            types.get(i).apply(statement, i + 1, params[i]);
         }
     }
 
-    @Override
-    int getNumberOfColumns() {
-        return super.getNumberOfColumns() - 1;
+    public int getNumberOfColumns() {
+        return numberOfColumns;
     }
 
-    @Override
-    void setSQLParams(PreparedStatement statement, T obj) throws SQLException {
-        for (int columnNumber = 1; columnNumber < types.size(); columnNumber++) {
-            ColumnType<?> type = types.get(columnNumber);
-            type.apply(statement, columnNumber, getters.get(columnNumber).apply(obj));
+    public String getUpdateSQL() {
+        return "UPDATE " + tableName + " SET " + updatePlaceholders + " WHERE id=?";
+    }
+
+    public void setUpdateParams(PreparedStatement statement, T obj) throws SQLException {
+        for (int i = 0; i < types.size(); i++) {
+            types.get(i).apply(statement, i + 1, getters.get(i).apply(obj));
         }
+        statement.setInt(getNumberOfColumns() + 1, obj.getId());
     }
 
-    @Override
-    public String getDeleteSQL() {
-        //TODO implement drop
-        return null;
-    }
-
-    String getUpdateSQL() {
-        return "UPDATE " + tableName + " SET " + columnNamesWithPlaceholders + " WHERE id=?";
+    public String getBaseSelectSQL() {
+        return "SELECT id, " + columnNames + " FROM " + tableName;
     }
 }

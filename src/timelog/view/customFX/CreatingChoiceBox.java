@@ -55,11 +55,14 @@ public class CreatingChoiceBox<T extends ModelObject<T>> extends HBox {
         if (allowSelectNull) addButton("Remove", () -> choiceBox.getSelectionModel().select(null));
     }
 
-    public void setValue(T value) {
-        if (value == null) choiceBox.getSelectionModel().select(null);
-        else {
-            if (!choices.contains(value)) choices.add(value);
-            choiceBox.getSelectionModel().select(Entry.of(value));
+    private void selectionChanged(ObservableValue<?> observableValue, Entry<T> oldValue, Entry<T> newValue) {
+        if (newValue == null) valueProperty.set(null);
+        else if (newValue.isPlaceholder()) {
+            assert newDialog != null;
+            final Optional<T> optionalItem = Optional.ofNullable(newDialog.get()).flatMap(Dialog::showAndWait);
+            optionalItem.ifPresentOrElse(onNew, () -> choiceBox.getSelectionModel().select(oldValue));
+        } else {
+            valueProperty.set(newValue.get());
         }
     }
 
@@ -72,9 +75,9 @@ public class CreatingChoiceBox<T extends ModelObject<T>> extends HBox {
     private void onListChanged(ListChangeListener.Change<? extends T> c) {
         while (c.next()) {
             if (c.wasPermutated()) {
-                ErrorAlert.show(new UnsupportedOperationException("entries list must not be permutated"));
+                ErrorAlert.show("ListChange", new UnsupportedOperationException("entries list must not be permutated"));
             } else if (c.wasUpdated()) {
-                ErrorAlert.show(new UnsupportedOperationException("entries list must not be updated"));
+                ErrorAlert.show("ListChange", new UnsupportedOperationException("entries list must not be updated"));
             } else {
                 for (T added : c.getAddedSubList()) choiceBox.getItems().add(Entry.of(added));
                 for (T removed : c.getRemoved()) choiceBox.getItems().remove(Entry.of(removed));
@@ -100,17 +103,6 @@ public class CreatingChoiceBox<T extends ModelObject<T>> extends HBox {
                 (observable, oldValue, newValue) -> button.setDisable(newValue == null));
     }
 
-    private void selectionChanged(ObservableValue<?> observableValue, Entry<T> oldValue, Entry<T> newValue) {
-        if (newValue == null) valueProperty.set(null);
-        else if (newValue.isPlaceholder()) {
-            assert newDialog != null;
-            final Optional<T> optionalItem = newDialog.get().showAndWait();
-            optionalItem.ifPresentOrElse(onNew, () -> choiceBox.getSelectionModel().select(oldValue));
-        } else {
-            valueProperty.set(newValue.get());
-        }
-    }
-
     public static <T extends ModelObject<T>> CreatingChoiceBox<T> simple(Collection<T> choices) {
         return new CreatingChoiceBox<>(choices, null, null, null, false);
     }
@@ -133,6 +125,14 @@ public class CreatingChoiceBox<T extends ModelObject<T>> extends HBox {
 
     public T getValue() {
         return valueProperty.get();
+    }
+
+    public void setValue(T value) {
+        if (value == null) choiceBox.getSelectionModel().select(null);
+        else {
+            if (!choices.contains(value)) choices.add(value);
+            choiceBox.getSelectionModel().select(Entry.of(value));
+        }
     }
 
     public ObservableList<T> getChoices() {

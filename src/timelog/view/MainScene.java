@@ -2,10 +2,7 @@ package timelog.view;
 
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -19,7 +16,7 @@ import timelog.view.insight.LookAtDayDialog;
 import timelog.view.insight.Report;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.time.temporal.ChronoUnit;
 import java.util.function.Supplier;
 
 public class MainScene extends Scene {
@@ -46,43 +43,93 @@ public class MainScene extends Scene {
     }
 
     private MenuBar getMenuBar() {
-        final MenuItem lookAt = new MenuItem("Look At Day ...");
-        lookAt.setOnAction(event -> new DatePickerDialog(localDateObservableValue -> CustomBindings.isBefore(localDateObservableValue, LocalDate.now()))
-                .showAndWait().ifPresent(date -> new LookAtDayDialog(date).show()));
-
-        final MenuItem editAll = new MenuItem("Edit All Entries");
-        editAll.setOnAction(event -> LogEntry.FACTORY.getAll().forEach(logEntry -> new LogEntryDialog(logEntry).showAndWait()));
-
-        final MenuItem reload = new MenuItem("Reload List");
-        reload.setOnAction(event -> {
-            logEntryList.getEntries().clear();
-            logEntryList.getEntries().addAll(LogEntry.FACTORY.getAllFinishedOn(LocalDate.now()));
-        });
-
-        final MenuItem refreshCanvas = new MenuItem("Redraw Minute Marks");
-        refreshCanvas.setOnAction(event -> logEntryList.refreshCanvas());
-
-        final MenuItem preferences = new MenuItem("Preferences");
-        preferences.setOnAction(event -> new PreferencesDialog().showAndWait()
-                .filter(buttonType -> buttonType.equals(ButtonType.OK))
-                .ifPresent(ok -> List.of(reload, refreshCanvas).forEach(MenuItem::fire)));
-
         return new MenuBar(
                 new Menu("Report", null,
                         reportMenuItem("Today", Report::today),
                         reportMenuItem("Yesterday", Report::yesterday),
+                        certainDayReportMenuItem(),
+                        new SeparatorMenuItem(),
                         reportMenuItem("Last 7 days", Report::last7days),
                         reportMenuItem("Current Week", Report::currentWeek),
-                        reportMenuItem("Previous Week", Report::previousWeek)
+                        reportMenuItem("Previous Week", Report::previousWeek),
+                        certainTimeSpanReportMenuItem()
                 ),
-                new Menu("Tools", null, lookAt, editAll, reload, refreshCanvas, preferences)
+                new Menu("Tools", null,
+                        lookAtMenuItem(),
+                        editAllMenuItem(),
+                        new SeparatorMenuItem(),
+                        reloadMenuItem(),
+                        refreshCanvasMenuItem(),
+                        new SeparatorMenuItem(),
+                        preferencesMenuItem()
+                )
         );
     }
 
-    private MenuItem reportMenuItem(final String yesterday, final Supplier<Report> report) {
-        final MenuItem menuItem = new MenuItem(yesterday);
+    private MenuItem reportMenuItem(final String label, final Supplier<Report> report) {
+        final MenuItem menuItem = new MenuItem(label);
         menuItem.setOnAction(event -> report.get().show());
         return menuItem;
+    }
+
+    private MenuItem certainDayReportMenuItem() {
+        final MenuItem menuItem = new MenuItem("For Day ...");
+        menuItem.setOnAction(event -> new DatePickerDialog(CustomBindings::isBeforeToday)
+                .showAndWait().map(Report::on).ifPresent(Dialog::show));
+        return menuItem;
+    }
+
+    private MenuItem certainTimeSpanReportMenuItem() {
+        final MenuItem menuItem = new MenuItem("From ... To ...");
+        menuItem.setOnAction(event -> new DatePickerDialog(CustomBindings::isBeforeToday, "From").showAndWait()
+                .ifPresent(fromDate -> new DatePickerDialog(observable ->
+                        CustomBindings.applyToBoolean(observable, LocalDate::isBefore, LocalDate.now().plus(1, ChronoUnit.DAYS))
+                                .and(CustomBindings.applyToBoolean(observable, LocalDate::isAfter, fromDate)), "To").showAndWait()
+                        .ifPresent(toDate -> Report.between(fromDate, toDate).show())));
+        return menuItem;
+    }
+
+    private MenuItem lookAtMenuItem() {
+        final MenuItem lookAt = new MenuItem("Look At Day ...");
+        lookAt.setOnAction(event -> new DatePickerDialog(CustomBindings::isBeforeToday)
+                .showAndWait().map(LookAtDayDialog::new).ifPresent(Dialog::show));
+        return lookAt;
+    }
+
+    private MenuItem editAllMenuItem() {
+        final MenuItem editAll = new MenuItem("Edit All Entries");
+        editAll.setOnAction(event -> LogEntry.FACTORY.getAll().forEach(logEntry -> new LogEntryDialog(logEntry).showAndWait()));
+        return editAll;
+    }
+
+    private MenuItem reloadMenuItem() {
+        final MenuItem reload = new MenuItem("Reload List");
+        reload.setOnAction(event -> {
+            reloadList();
+        });
+        return reload;
+    }
+
+    private MenuItem refreshCanvasMenuItem() {
+        final MenuItem refreshCanvas = new MenuItem("Redraw Minute Marks");
+        refreshCanvas.setOnAction(event -> logEntryList.refreshCanvas());
+        return refreshCanvas;
+    }
+
+    private MenuItem preferencesMenuItem() {
+        final MenuItem preferences = new MenuItem("Preferences");
+        preferences.setOnAction(event -> new PreferencesDialog().showAndWait()
+                .filter(buttonType -> buttonType.equals(ButtonType.OK))
+                .ifPresent(ok -> {
+                    reloadList();
+                    logEntryList.refreshCanvas();
+                }));
+        return preferences;
+    }
+
+    private void reloadList() {
+        logEntryList.getEntries().clear();
+        logEntryList.getEntries().addAll(LogEntry.FACTORY.getAllFinishedOn(LocalDate.now()));
     }
 
 }

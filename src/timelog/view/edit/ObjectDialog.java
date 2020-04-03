@@ -11,7 +11,7 @@ import javafx.scene.control.TextField;
 import timelog.model.db.ModelObject;
 import timelog.view.customFX.GridPane2C;
 
-abstract class ObjectDialog<T extends ModelObject<T>> extends Dialog<T> {
+public abstract class ObjectDialog<T extends ModelObject<?>> extends Dialog<T> {
 
     protected final T editedObject;
     protected final GridPane2C gridPane2C;
@@ -19,11 +19,11 @@ abstract class ObjectDialog<T extends ModelObject<T>> extends Dialog<T> {
     private final Button okButton;
     private BooleanExpression okButtonDisabled;
 
-    ObjectDialog(String name, T editedObject) {
+    protected ObjectDialog(String name, T editedObject) {
         super();
         this.editedObject = editedObject;
         setTitle(name);
-        setHeaderText((editedObject == null ? "New" : "Edit") + " Activity");
+        setHeaderText((editedObject == null ? "New " : "Edit ") + name);
 
         gridPane2C = new GridPane2C(10);
         final TextField id = gridPane2C.addRow("id", new TextField());
@@ -37,16 +37,6 @@ abstract class ObjectDialog<T extends ModelObject<T>> extends Dialog<T> {
         setResultConverter(this::convertResult);
     }
 
-    void addOKRequirement(ObservableBooleanValue value) {
-        okButtonDisabled.removeListener(this::onDisableInvalidated);
-        okButtonDisabled = okButtonDisabled.or(BooleanExpression.booleanExpression(value).not());
-        okButtonDisabled.addListener(this::onDisableInvalidated);
-    }
-
-    private void onDisableInvalidated(Observable observable) {
-        okButton.setDisable(okButtonDisabled.getValue());
-    }
-
     private T convertResult(ButtonType buttonType) {
         if (!buttonType.equals(ButtonType.OK)) return null;
         else if (editedObject == null) return createNew();
@@ -56,4 +46,15 @@ abstract class ObjectDialog<T extends ModelObject<T>> extends Dialog<T> {
     protected abstract T createNew();
 
     protected abstract boolean save();
+
+    protected void addOKRequirement(ObservableBooleanValue value) {
+        okButtonDisabled.removeListener(this::onDisableInvalidated);
+        okButtonDisabled = okButtonDisabled.or(BooleanExpression.booleanExpression(value).not());
+        okButtonDisabled.addListener(this::onDisableInvalidated);
+        onDisableInvalidated(null);
+    }
+
+    private void onDisableInvalidated(Observable observable) {
+        okButton.setDisable(okButtonDisabled.getValue());
+    }
 }

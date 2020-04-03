@@ -1,16 +1,15 @@
 package timelog.view.customFX;
 
-import javafx.beans.binding.BooleanBinding;
-import javafx.beans.binding.BooleanExpression;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.binding.ObjectExpression;
+import javafx.beans.binding.*;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableStringValue;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextField;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public final class CustomBindings {
@@ -44,6 +43,32 @@ public final class CustomBindings {
         };
     }
 
+    public static <P, Q, R> ObjectExpression<R> apply(ObservableValue<P> observableValue, BiFunction<P, Q, R> select, Q param) {
+        return new ObjectBinding<>() {
+            {
+                bind(observableValue);
+            }
+
+            @Override
+            protected R computeValue() {
+                return select.apply(observableValue.getValue(), param);
+            }
+        };
+    }
+
+    public static StringBinding join(ObservableStringValue first, String additional) {
+        return new StringBinding() {
+            {
+                bind(first);
+            }
+
+            @Override
+            protected String computeValue() {
+                return first.get() + additional;
+            }
+        };
+    }
+
     public static <P, I, R> ObjectExpression<R> select(ObservableValue<P> observableValue,
                                                        Function<P, ObservableValue<I>> intermediate,
                                                        Function<I, ObservableValue<R>> select) {
@@ -73,15 +98,19 @@ public final class CustomBindings {
         };
     }
 
-    public static BooleanExpression isBefore(ObservableValue<LocalDate> localDateObservableValue, LocalDate localDateTarget) {
+    public static BooleanExpression isBeforeToday(ObservableValue<LocalDate> localDateObservableValue) {
+        return applyToBoolean(localDateObservableValue, LocalDate::isBefore, LocalDate.now());
+    }
+
+    public static <P, Q> BooleanExpression applyToBoolean(ObservableValue<P> observableValue, BiFunction<P, Q, Boolean> select, Q param) {
         return new BooleanBinding() {
             {
-                bind(localDateObservableValue);
+                bind(observableValue);
             }
 
             @Override
             protected boolean computeValue() {
-                return localDateObservableValue.getValue() != null && localDateObservableValue.getValue().isBefore(localDateTarget);
+                return observableValue.getValue() != null && select.apply(observableValue.getValue(), param);
             }
         };
     }

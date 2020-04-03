@@ -5,11 +5,9 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableStringValue;
-import timelog.model.db.ModelFactory;
-import timelog.model.db.ModelObject;
-import timelog.model.db.ModelTableDefinition;
-import timelog.model.db.TableDefinition;
+import timelog.model.db.*;
 
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -136,11 +134,11 @@ public final class LogEntry extends ModelObject<LogEntry> {
                             view.getOptionalInt("transport").map(MeansOfTransport.FACTORY::getForId).orElse(null)
                     ),
                     new ModelTableDefinition<LogEntry>("log")
-                            .withColumn("activity", TableDefinition.ColumnType.getForeignKeyColumn(Activity.class), LogEntry::getActivity)
-                            .withColumn("what", TableDefinition.ColumnType.STRING, LogEntry::getWhat)
-                            .withColumn("start", TableDefinition.ColumnType.TIMESTAMP, LogEntry::getStart)
-                            .withColumn("end", TableDefinition.ColumnType.TIMESTAMP, LogEntry::getEnd)
-                            .withColumn("transport", TableDefinition.ColumnType.getForeignKeyColumn(MeansOfTransport.class), LogEntry::getMeansOfTransport)
+                            .withColumn("activity", ColumnType.getForeignKeyColumn(Activity.class), LogEntry::getActivity)
+                            .withColumn("what", ColumnType.STRING, LogEntry::getWhat)
+                            .withColumn("start", ColumnType.TIMESTAMP, LogEntry::getStart)
+                            .withColumn("end", ColumnType.TIMESTAMP, LogEntry::getEnd)
+                            .withColumn("transport", ColumnType.getForeignKeyColumn(MeansOfTransport.class), LogEntry::getMeansOfTransport)
             );
         }
 
@@ -161,6 +159,14 @@ public final class LogEntry extends ModelObject<LogEntry> {
                 if (param.equals(1)) preparedStatement.setTimestamp(param, Timestamp.valueOf(from));
                 if (param.equals(2)) preparedStatement.setTimestamp(param, Timestamp.valueOf(to));
             });
+        }
+
+        public LogEntry getLast() {
+            return Database.execute(definition.getBaseSelectSQL() + " ORDER BY end DESC", statement -> {
+                try (final ResultSet resultSet = statement.executeQuery()) {
+                    return this.selectFirst(resultSet);
+                }
+            }, null);
         }
     }
 }

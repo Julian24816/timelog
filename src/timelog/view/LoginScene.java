@@ -12,7 +12,6 @@ import timelog.view.customFX.GridPane2C;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 
 public class LoginScene extends Scene {
 
@@ -61,7 +60,7 @@ public class LoginScene extends Scene {
             preferenceMap.dumpPreferences();
             onLogin.run();
         } catch (IOException e) {
-            ErrorAlert.show(e);
+            ErrorAlert.show("Datebase Init", e);
         }
     }
 

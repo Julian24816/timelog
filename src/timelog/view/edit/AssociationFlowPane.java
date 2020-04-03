@@ -65,9 +65,9 @@ public class AssociationFlowPane<A extends ModelObject<A>, B extends ModelObject
     private void onListChanged(ListChangeListener.Change<? extends T> c) {
         while (c.next()) {
             if (c.wasPermutated()) {
-                ErrorAlert.show(new UnsupportedOperationException("entries list must not be permutated"));
+                ErrorAlert.show("ListChange", new UnsupportedOperationException("entries list must not be permutated"));
             } else if (c.wasUpdated()) {
-                ErrorAlert.show(new UnsupportedOperationException("entries list must not be updated"));
+                ErrorAlert.show("ListChange", new UnsupportedOperationException("entries list must not be updated"));
             } else {
                 for (T added : c.getAddedSubList())
                     addAssociationItem(added.getSecond(), b -> {
@@ -81,9 +81,9 @@ public class AssociationFlowPane<A extends ModelObject<A>, B extends ModelObject
     private void onPendingListChanged(ListChangeListener.Change<? extends PendingAssociation<A, B>> c) {
         while (c.next()) {
             if (c.wasPermutated()) {
-                ErrorAlert.show(new UnsupportedOperationException("entries list must not be permutated"));
+                ErrorAlert.show("ListChange", new UnsupportedOperationException("entries list must not be permutated"));
             } else if (c.wasUpdated()) {
-                ErrorAlert.show(new UnsupportedOperationException("entries list must not be updated"));
+                ErrorAlert.show("ListChange", new UnsupportedOperationException("entries list must not be updated"));
             } else {
                 for (PendingAssociation<A, B> added : c.getAddedSubList())
                     addAssociationItem(added.with, b -> pendingItems.remove(added));

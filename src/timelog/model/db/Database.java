@@ -9,13 +9,17 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * holds a connection pool
  */
 public final class Database {
-    private static Consumer<Throwable> errorHandler = Throwable::printStackTrace;
+    private static BiConsumer<String, Throwable> errorHandler = (sql, error) -> {
+        System.out.println(sql);
+        error.printStackTrace();
+    };
+
     private static BasicDataSource dataSource;
 
     private Database() {
@@ -43,7 +47,7 @@ public final class Database {
              final PreparedStatement statement = connection.prepareStatement(sql)) {
             return executor.apply(statement);
         } catch (SQLException e) {
-            errorHandler.accept(e);
+            errorHandler.accept(sql, e);
             return errorValue;
         }
     }
@@ -53,7 +57,7 @@ public final class Database {
         return dataSource.getConnection();
     }
 
-    public static void setErrorHandler(Consumer<Throwable> errorHandler) {
+    public static void setErrorHandler(BiConsumer<String, Throwable> errorHandler) {
         Database.errorHandler = Objects.requireNonNull(errorHandler);
     }
 

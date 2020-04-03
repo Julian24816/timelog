@@ -126,9 +126,9 @@ public final class Activity extends ModelObject<Activity> {
                             view.getString("color")
                     ),
                     new ModelTableDefinition<Activity>("activity")
-                            .withColumn("parent", TableDefinition.ColumnType.getForeignKeyColumn(Activity.class), Activity::getParent)
-                            .withColumn("name", TableDefinition.ColumnType.STRING, Activity::getName)
-                            .withColumn("color", TableDefinition.ColumnType.STRING, Activity::getColor)
+                            .withColumn("parent", ColumnType.getForeignKeyColumn(Activity.class), Activity::getParent)
+                            .withColumn("name", ColumnType.STRING, Activity::getName)
+                            .withColumn("color", ColumnType.STRING, Activity::getColor)
             );
 
             final boolean rootExists = selectWhere(ResultSet::next, "id=0");

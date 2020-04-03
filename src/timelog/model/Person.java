@@ -3,10 +3,10 @@ package timelog.model;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableStringValue;
+import timelog.model.db.ColumnType;
 import timelog.model.db.ModelFactory;
 import timelog.model.db.ModelObject;
 import timelog.model.db.ModelTableDefinition;
-import timelog.model.db.TableDefinition;
 
 import java.util.Objects;
 
@@ -57,7 +57,7 @@ public final class Person extends ModelObject<Person> {
                             view.getString("name")
                     ),
                     new ModelTableDefinition<Person>("person")
-                            .withColumn("name", TableDefinition.ColumnType.STRING, Person::getName)
+                            .withColumn("name", ColumnType.STRING, Person::getName)
             );
         }
     }
