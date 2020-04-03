@@ -4,7 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.function.Function;
 
-public class AssociationTableDefinition<A extends ModelObject<A>, B extends ModelObject<B>, T extends Association<A, B>> extends TableDefinition<T> {
+public final class AssociationTableDefinition<A extends ModelObject<A>, B extends ModelObject<B>, T extends Association<A, B>> extends TableDefinition<T> {
     private final String firstColumn;
     private final String secondColumn;
     private final String firstColumnPlaceholder;

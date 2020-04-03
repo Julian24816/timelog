@@ -9,6 +9,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextField;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -68,6 +69,19 @@ public final class CustomBindings {
             @Override
             protected boolean computeValue() {
                 return textField.getText().matches(regex);
+            }
+        };
+    }
+
+    public static BooleanExpression isBefore(ObservableValue<LocalDate> localDateObservableValue, LocalDate localDateTarget) {
+        return new BooleanBinding() {
+            {
+                bind(localDateObservableValue);
+            }
+
+            @Override
+            protected boolean computeValue() {
+                return localDateObservableValue.getValue() != null && localDateObservableValue.getValue().isBefore(localDateTarget);
             }
         };
     }

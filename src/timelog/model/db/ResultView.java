@@ -40,4 +40,8 @@ public final class ResultView {
         if (resultSet.wasNull()) return Optional.empty();
         return Optional.of(result);
     }
+
+    public boolean getBoolean(String key) throws SQLException {
+        return resultSet.getBoolean(getIndex(key));
+    }
 }

@@ -1,4 +1,4 @@
-package timelog.view.statistic;
+package timelog.view.insight;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Report extends Alert {
-    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    public static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     public Report(String timeFrame, Collection<LogEntry> logEntries) {
         super(AlertType.INFORMATION);
@@ -48,7 +48,7 @@ public class Report extends Alert {
     }
 
     public static Report on(LocalDate date) {
-        return new Report(FORMAT.format(date), LogEntry.FACTORY.getAllFinishedOn(date));
+        return new Report(DATE_FORMAT.format(date), LogEntry.FACTORY.getAllFinishedOn(date));
     }
 
     public static Report yesterday() {
@@ -61,7 +61,7 @@ public class Report extends Alert {
 
     public static Report between(LocalDate begin, LocalDate end) {
         if (!begin.isBefore(end)) throw new IllegalArgumentException();
-        return new Report(FORMAT.format(begin) + " - " + FORMAT.format(end),
+        return new Report(DATE_FORMAT.format(begin) + " - " + DATE_FORMAT.format(end),
                 LogEntry.FACTORY.getAllFinishedBetween(begin, end.plus(1, ChronoUnit.DAYS)));
     }
 

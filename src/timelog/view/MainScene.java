@@ -11,9 +11,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import timelog.model.LogEntry;
+import timelog.view.customFX.CustomBindings;
+import timelog.view.customFX.DatePickerDialog;
 import timelog.view.edit.LogEntryDialog;
 import timelog.view.edit.PreferencesDialog;
-import timelog.view.statistic.Report;
+import timelog.view.insight.LookAtDayDialog;
+import timelog.view.insight.Report;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -43,6 +46,10 @@ public class MainScene extends Scene {
     }
 
     private MenuBar getMenuBar() {
+        final MenuItem lookAt = new MenuItem("Look At Day ...");
+        lookAt.setOnAction(event -> new DatePickerDialog(localDateObservableValue -> CustomBindings.isBefore(localDateObservableValue, LocalDate.now()))
+                .showAndWait().ifPresent(date -> new LookAtDayDialog(date).show()));
+
         final MenuItem editAll = new MenuItem("Edit All Entries");
         editAll.setOnAction(event -> LogEntry.FACTORY.getAll().forEach(logEntry -> new LogEntryDialog(logEntry).showAndWait()));
 
@@ -61,14 +68,14 @@ public class MainScene extends Scene {
                 .ifPresent(ok -> List.of(reload, refreshCanvas).forEach(MenuItem::fire)));
 
         return new MenuBar(
-                new Menu("Statistic", null,
+                new Menu("Report", null,
                         reportMenuItem("Today", Report::today),
                         reportMenuItem("Yesterday", Report::yesterday),
                         reportMenuItem("Last 7 days", Report::last7days),
                         reportMenuItem("Current Week", Report::currentWeek),
                         reportMenuItem("Previous Week", Report::previousWeek)
                 ),
-                new Menu("Tools", null, editAll, reload, refreshCanvas, preferences)
+                new Menu("Tools", null, lookAt, editAll, reload, refreshCanvas, preferences)
         );
     }
 

@@ -23,7 +23,6 @@ import timelog.view.customFX.CustomBindings;
 import timelog.view.customFX.JoiningTextFlow;
 import timelog.view.customFX.TimeTextField;
 import timelog.view.edit.LogEntryDialog;
-import timelog.view.single.EndTimeDialog;
 
 import java.time.Duration;
 import java.time.LocalDateTime;

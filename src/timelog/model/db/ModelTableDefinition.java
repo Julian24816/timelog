@@ -4,7 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.function.Function;
 
-public class ModelTableDefinition<T extends ModelObject<T>> extends TableDefinition<T> {
+public final class ModelTableDefinition<T extends ModelObject<T>> extends TableDefinition<T> {
 
     private final String columnNamesWithPlaceholders;
     private final String columnNames;

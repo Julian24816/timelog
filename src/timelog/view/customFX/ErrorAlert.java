@@ -9,7 +9,9 @@ import java.io.StringWriter;
 
 public class ErrorAlert extends Alert {
     public ErrorAlert(Throwable exception) {
-        super(AlertType.ERROR, String.format("Exception: %s", exception.getMessage()));
+        super(AlertType.ERROR, String.format("Message: %s", exception.getMessage()));
+        setTitle("Error");
+        setHeaderText("An " + exception.getClass() + " occurred.");
 
         final StringWriter errorMessage = new StringWriter();
         exception.printStackTrace(new PrintWriter(errorMessage));

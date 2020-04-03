@@ -1,4 +1,4 @@
-package timelog.view.single;
+package timelog.view;
 
 import javafx.beans.Observable;
 import javafx.geometry.Insets;
