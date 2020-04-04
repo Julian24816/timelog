@@ -7,9 +7,12 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 public final class Preferences {
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     public static final String FILE_NAME = "preferences.properties";
     private static final Properties PROPERTIES = new Properties();
 
@@ -45,6 +48,10 @@ public final class Preferences {
         return Double.parseDouble(PROPERTIES.getProperty(key));
     }
 
+    public static LocalTime getTime(String key) {
+        return LocalTime.parse(get(key), TIME_FORMATTER);
+    }
+
     public static void set(String key, String value) {
         PROPERTIES.setProperty(key, value);
     }
@@ -59,5 +66,9 @@ public final class Preferences {
 
     public static void set(String key, double value) {
         PROPERTIES.setProperty(key, String.valueOf(value));
+    }
+
+    public static void set(String key, LocalTime time) {
+        PROPERTIES.setProperty(key, TIME_FORMATTER.format(time));
     }
 }

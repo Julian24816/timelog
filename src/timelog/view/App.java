@@ -7,6 +7,7 @@ import timelog.preferences.Preferences;
 import timelog.view.customFX.ErrorAlert;
 
 import java.io.IOException;
+import java.time.LocalTime;
 
 public class App extends Application {
     public static void main(String[] args) {
@@ -39,6 +40,7 @@ public class App extends Application {
         Preferences.set("MinuteMarkEvery", 30);
         Preferences.set("MinuteMarkWidth", 10);
         Preferences.set("MinuteMarkColor", "BLACK");
+        Preferences.set("StartOfDay", LocalTime.of(4, 0));
     }
 
     @Override

@@ -5,6 +5,7 @@ import javafx.scene.control.*;
 import timelog.preferences.PreferenceMap;
 import timelog.view.customFX.CustomBindings;
 import timelog.view.customFX.GridPane2C;
+import timelog.view.customFX.TimeTextField;
 
 public class PreferencesDialog extends Dialog<ButtonType> {
 
@@ -36,6 +37,9 @@ public class PreferencesDialog extends Dialog<ButtonType> {
 
         gridPane2C.addSeparator();
 
+        final TimeTextField startOfDay = gridPane2C.addRow("Start of Day", new TimeTextField(null));
+        preferenceMap.mapTo(startOfDay, "StartOfDay");
+
         final TextField sleepID = gridPane2C.addRow("ID of Sleep Activity", new TextField());
         preferenceMap.mapTo(sleepID, "SleepID");
         sleepID.setPromptText("set to -1 to disable");
@@ -50,6 +54,7 @@ public class PreferencesDialog extends Dialog<ButtonType> {
         okEnabled = CustomBindings.matches(scaling, "\\d+(\\.\\d+)?")
                 .and(CustomBindings.matches(marks, "\\d+"))
                 .and(CustomBindings.matches(marksWidth, "\\d+"))
+                .and(startOfDay.valueProperty().isNotNull())
                 .and(CustomBindings.matches(sleepID, "-1|\\d+"))
                 .and(CustomBindings.matches(sleepLineHeight, "\\d+"));
         okEnabled.addListener(observable -> okButton.setDisable(!okEnabled.getValue()));

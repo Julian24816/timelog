@@ -5,6 +5,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.paint.Color;
+import timelog.view.customFX.TimeTextField;
 import timelog.view.edit.ActivityDialog;
 
 import java.util.HashMap;
@@ -16,10 +17,16 @@ public final class PreferenceMap {
     private Map<ChoiceBox<?>, String> choiceBoxes = new HashMap<>();
     private Map<CheckBox, String> checkBoxes = new HashMap<>();
     private Map<ColorPicker, String> colorPickers = new HashMap<>();
+    private Map<TimeTextField, String> timeControls = new HashMap<>();
 
     public void mapTo(CheckBox checkBox, String key) {
         checkBoxes.put(checkBox, key);
         checkBox.setSelected(Preferences.getBoolean(key));
+    }
+
+    public void mapTo(TimeTextField time, String key) {
+        timeControls.put(time, key);
+        time.setValue(Preferences.getTime(key));
     }
 
     public void mapTo(TextInputControl text, String key) {
@@ -43,5 +50,6 @@ public final class PreferenceMap {
         textInputControls.forEach((text, key) -> Preferences.set(key, text.getText()));
         checkBoxes.forEach((checkBox, key) -> Preferences.set(key, checkBox.isSelected() ? "true" : "false"));
         colorPickers.forEach((colorPicker, key) -> Preferences.set(key, ActivityDialog.colorToHex(colorPicker.getValue())));
+        timeControls.forEach((time, key) -> Preferences.set(key, time.getValue()));
     }
 }

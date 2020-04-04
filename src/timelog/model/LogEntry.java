@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableStringValue;
 import timelog.model.db.*;
+import timelog.preferences.Preferences;
 
 import java.sql.ResultSet;
 import java.sql.Timestamp;
@@ -151,7 +152,7 @@ public final class LogEntry extends ModelObject<LogEntry> {
         }
 
         public Collection<LogEntry> getAllFinishedBetween(final LocalDate beginInclusive, final LocalDate endExclusive) {
-            return getAllFinishedBetween(beginInclusive.atTime(0, 0), endExclusive.atTime(0, 0));
+            return getAllFinishedBetween(beginInclusive.atTime(Preferences.getTime("StartOfDay")), endExclusive.atTime(Preferences.getTime("StartOfDay")));
         }
 
         public Collection<LogEntry> getAllFinishedBetween(final LocalDateTime from, final LocalDateTime to) {
